@@ -105,6 +105,18 @@ public:
         cout << gesture.name() << '\n';
     }
     
+    virtual void onGesture(array<pair<float, string>, 3> const& matches) override
+    {
+        static stringstream ss;
+        ss.str("");
+        
+        ss << matches[0].second << " [" << matches[0].first << "] ";
+        ss << matches[1].second << " [" << matches[1].first << "] ";
+        ss << matches[2].second << " [" << matches[2].first << "]";
+     
+        text_.setString(ss.str());
+    }
+    
 private:
     sf::Text& text_;
 };
@@ -124,9 +136,9 @@ int main()
     if (!font.loadFromFile("resources/arial.ttf"))
         return EXIT_FAILURE;
 
-    sf::Text asl_letter = sf::Text("", font, 60);
+    sf::Text asl_letter = sf::Text("", font, 30);
     asl_letter.setColor(sf::Color(255, 255, 255, 170));
-    asl_letter.setPosition(400.f, 500.f);
+    asl_letter.setPosition(100.f, 500.f);
 
     Listener listener(trainer, asl_letter);
     

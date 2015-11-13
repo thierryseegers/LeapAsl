@@ -5,7 +5,10 @@
 #include <LeapSDK/Leap.h>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <string>
+#include <utility>
 
 namespace LearnedGestures
 {
@@ -87,6 +90,9 @@ public:
     virtual void onGesture(LearnedGesture const&)
     {}
 
+    virtual void onGesture(std::array<std::pair<float, std::string>, 3> const& matches)
+    {}
+
 private:
     virtual void onFrame(Leap::Controller const& controller)
     {
@@ -105,24 +111,42 @@ private:
         }
         
         // Analyze the one hand present.
-        std::string const gesture = poses_.match(controller.frame().hands()[0]);
-        //std::string const gesture = poses_.search(controller.frame().hands()[0]).begin()->second;
+        //std::string const gesture = poses_.match(controller.frame().hands()[0]);
+        auto const& searches_ = poses_.search(controller.frame().hands()[0]);
+        
         
         // If the current gesture is invalid or it is different from the recorded one, replace the information we have and start from scratch.
         // Else, if the current gesture is the same as the recorded one and we have past our \ref hold_time, report what we have and reset the information.
         // Else, do nothing and we will keep analyzing new samples.
         if(//!gesture.valid() ||
-           gesture != recorded_gesture)
+           //gesture != recorded_gesture)
+           //top_searches != top_searches_)
+           searches_.begin()->second != recorded_searches_[0].second &&
+           (++searches_.begin())->second != recorded_searches_[1].second &&
+           (++++searches_.begin())->second != recorded_searches_[2].second)
         {
-            recorded_gesture = gesture;
+            //recorded_gesture = gesture;
+            std::copy(searches_.begin(), ++++++searches_.begin(), recorded_searches_.begin());
             recorded_sample = now;
         }
         else if(now - recorded_sample >= hold_time)
         {
-            onGesture(LearnedGesture(LearnedGesture::TYPE_POSE, gesture));
+            //onGesture(LearnedGesture(LearnedGesture::TYPE_POSE, gesture));
+            //onGesture(LearnedGesture(LearnedGesture::TYPE_POSE, top_searches_[0]));
+            recorded_searches_[0].first /= 100;
+            recorded_searches_[1].first /= 100;
+            recorded_searches_[2].first /= 100;
+            
+            onGesture(recorded_searches_);
             
             recorded_gesture.clear();// = gesture;
             recorded_sample = now;
+        }
+        else
+        {
+            recorded_searches_[0].first += searches_.begin()->first;
+            recorded_searches_[1].first += (++searches_.begin())->first;
+            recorded_searches_[2].first += (++++searches_.begin())->first;
         }
     }
     
@@ -131,6 +155,8 @@ private:
     
     std::string recorded_gesture;
     time_point recorded_sample;
+    
+    std::array<std::pair<float, std::string>, 3> recorded_searches_;
     
     detail::Poses poses_;
 };
