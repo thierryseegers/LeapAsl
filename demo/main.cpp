@@ -12,8 +12,10 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -91,13 +93,69 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
+template<typename T>
+class trie
+{
+public:
+    trie<T>* insert(T const& t)
+    {
+        return &children_[t];
+    }
+    
+    template<typename I>
+    trie<T>* insert(I begin, I end)
+    {
+        trie<T> *p = this;
+        
+        while(begin != end)
+        {
+            p = p->insert(*begin);
+            ++begin;
+        }
+        
+        return p;
+    }
+    
+    trie<T>* find(T const& t)
+    {
+        auto i = children_.find(t);
+        
+        return i == children_.end() ? nullptr : &i->second;
+    }
+    
+    size_t count(T const& t) const
+    {
+        return children_.count(t);
+    }
+    
+private:
+    map<T, trie<T>> children_;
+};
+
 class Listener : public LearnedGestures::Listener
 {
 public:
-    Listener(LearnedGestures::Trainer const& trainer, sf::Text& text)
+    Listener(string const& dictionary_path, LearnedGestures::Trainer const& trainer, sf::Text& text)
         : LearnedGestures::Listener(trainer)
         , text_(text)
-    {}
+    {
+        // Populate our dictionary trie.
+        // We'll insert a '\0' to indicate valid words. e.g.:
+        // b->\0
+        //  ->e->\0
+        //     ->a
+        //       ->n->\0
+        // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
+        std::ifstream dictionary_stream{dictionary_path};
+        
+        std::string word;
+        while(std::getline(dictionary_stream, word))
+        {
+            std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+            dictionary_.insert(word.begin(), word.end())->insert('\0');
+        }
+
+    }
     
     virtual void onGesture(LearnedGestures::LearnedGesture const& gesture) override
     {
@@ -115,10 +173,77 @@ public:
         ss << matches[2].second << " [" << matches[2].first << "]";
      
         text_.setString(ss.str());
+        
+        
+        vector<string> new_possibilities;
+        
+        auto const explore = [this](string const& s)
+        {
+            trie<char> *p = &dictionary_;
+            
+            for(auto c = s.begin(); p && c != s.end(); ++c)
+            {
+                p = p->find(*c);
+            }
+  
+            if(p && p->count('\0'))
+            {
+                return 2;
+            }
+            else if(p)
+            {
+                return 1;
+            }
+            
+            return 0;
+        };
+
+        if(possibles_.empty())
+        {
+            cout << "starting over" << endl;
+            
+            possibles_.push_back(string() + (char)::tolower(matches[0].second[0]));
+            possibles_.push_back(string() + (char)::tolower(matches[1].second[0]));
+            possibles_.push_back(string() + (char)::tolower(matches[2].second[0]));
+        }
+        else
+        {
+            cout << "incoming!" << endl;
+            
+            for(auto const& possible : possibles_)
+            {
+                int result;
+                
+                for(int i : {0, 1, 2})
+                {
+                    string const new_possible = possible + (char)::tolower(matches[i].second[0]);
+                    
+                    cout << "exploring: " << new_possible << endl;
+                    
+                    result = explore(new_possible);
+                    if(result == 2)
+                    {
+                        // It's a valid word!
+                        cout << "word: " << new_possible << endl;
+                        new_possibilities.push_back(new_possible); // This should be done one if word is also potential to other words.
+                    }
+                    else if(result == 1)
+                    {
+                        new_possibilities.push_back(new_possible);
+                    }
+                }
+            }
+            
+            possibles_ = new_possibilities;
+            
+        }
     }
     
 private:
     sf::Text& text_;
+    
+    vector<string> possibles_;
+    trie<char> dictionary_;
 };
 
 int main()
@@ -140,7 +265,7 @@ int main()
     asl_letter.setColor(sf::Color(255, 255, 255, 170));
     asl_letter.setPosition(100.f, 500.f);
 
-    Listener listener(trainer, asl_letter);
+    Listener listener("./aspell_en_expanded", trainer, asl_letter);
     
     Leap::Controller controller;
     controller.addListener(listener);
@@ -209,31 +334,6 @@ int main()
                 {
                     trainer.capture(string(1, event.key.code + 'A'), controller.frame().hands()[0]);
                 }
-                /*
-                else if(event.key.code == sf::Keyboard::Space)
-                {
-                    auto const& hand = controller.frame().hands()[0];
-                    
-                    if(hand.isValid() && hand.confidence() >= 0.2)
-                    {
-                        auto const& scores = gestures.search(hand);
-                        for(auto const& s : scores)
-                        {
-                            cout << '[' << s.first << ',' << s.second << ']' << endl;
-                        }
-                        
-                        auto const& match = gestures.match(hand);
-                        
-                        asl_letter.setString(match);
-                        cout << match << endl;
-                    }
-                    else
-                    {
-                        cout << "?" << endl;
-                        asl_letter.setString('?');
-                    }
-                }
-                 */
             }
         }
 

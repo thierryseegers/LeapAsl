@@ -80,7 +80,7 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
 
-    Listener(Trainer const& trainer, int const types = LearnedGesture::TYPE_ALL, duration const& hold_time = std::chrono::milliseconds(500), duration const& sample_rate = std::chrono::milliseconds(100))
+    Listener(Trainer const& trainer, int const types = LearnedGesture::TYPE_ALL, duration const& hold_time = std::chrono::milliseconds(2000), duration const& sample_rate = std::chrono::milliseconds(100))
     : hold_time(hold_time)
     , sample_rate(sample_rate)
     , next_sample(std::chrono::high_resolution_clock::now())
