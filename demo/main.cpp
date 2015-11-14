@@ -116,16 +116,58 @@ public:
         return p;
     }
     
-    trie<T>* find(T const& t)
+    const trie<T>* find(T const& t) const
     {
         auto i = children_.find(t);
         
         return i == children_.end() ? nullptr : &i->second;
     }
     
+    size_t size() const
+    {
+        return children_.size();
+    }
+    
     size_t count(T const& t) const
     {
         return children_.count(t);
+    }
+    
+    enum validity
+    {
+        invalid = 0x0,
+        valid = 0x1,
+        correct = 0x2
+    };
+    
+    template<typename I>
+    validity validate(I begin, I end) const
+    {
+        const trie<T> *p = this;
+        
+        while(p && begin != end)
+        {
+            p = p->find(*begin);
+            ++begin;
+        }
+        
+        if(p)
+        {
+            if(!p->count('\0'))
+            {
+                return valid;
+            }
+            else if(p->size() > 1)
+            {
+                return (validity)(valid | correct);
+            }
+            else
+            {
+                return correct;
+            }
+        }
+        
+        return invalid;
     }
     
 private:
@@ -163,48 +205,32 @@ public:
         cout << gesture.name() << '\n';
     }
     
-    virtual void onGesture(array<pair<float, string>, 3> const& matches) override
+    virtual void onGesture(map<float, string> const& matches) override
     {
+        array<pair<float, string>, 5> top_matches;
+        copy_n(matches.begin(), 5, top_matches.begin());
+
         static stringstream ss;
         ss.str("");
         
-        ss << matches[0].second << " [" << matches[0].first << "] ";
-        ss << matches[1].second << " [" << matches[1].first << "] ";
-        ss << matches[2].second << " [" << matches[2].first << "]";
-     
+        for(auto const& top_match : top_matches)
+        {
+            ss << top_match.second << " [" << top_match.first << "]\n";
+        }
+
         text_.setString(ss.str());
         
         
-        vector<string> new_possibilities;
-        
-        auto const explore = [this](string const& s)
-        {
-            trie<char> *p = &dictionary_;
-            
-            for(auto c = s.begin(); p && c != s.end(); ++c)
-            {
-                p = p->find(*c);
-            }
-  
-            if(p && p->count('\0'))
-            {
-                return 2;
-            }
-            else if(p)
-            {
-                return 1;
-            }
-            
-            return 0;
-        };
+        vector<string> next_possibilities;
 
         if(possibles_.empty())
         {
             cout << "starting over" << endl;
             
-            possibles_.push_back(string() + (char)::tolower(matches[0].second[0]));
-            possibles_.push_back(string() + (char)::tolower(matches[1].second[0]));
-            possibles_.push_back(string() + (char)::tolower(matches[2].second[0]));
+            for(auto const& top_match : top_matches)
+            {
+                possibles_.push_back(string() + (char)::tolower(top_match.second[0]));
+            }
         }
         else
         {
@@ -212,29 +238,23 @@ public:
             
             for(auto const& possible : possibles_)
             {
-                int result;
-                
-                for(int i : {0, 1, 2})
+                for(int i : {0, 1, 2, 3, 4})
                 {
-                    string const new_possible = possible + (char)::tolower(matches[i].second[0]);
+                    string const next_possible = possible + (char)::tolower(top_matches[i].second[0]);
                     
-                    cout << "exploring: " << new_possible << endl;
-                    
-                    result = explore(new_possible);
-                    if(result == 2)
+                    auto validity = dictionary_.validate(next_possible.begin(), next_possible.end());
+                    if(validity & trie<char>::valid)
                     {
-                        // It's a valid word!
-                        cout << "word: " << new_possible << endl;
-                        new_possibilities.push_back(new_possible); // This should be done one if word is also potential to other words.
+                        next_possibilities.push_back(next_possible);
                     }
-                    else if(result == 1)
+                    if(validity & trie<char>::correct)
                     {
-                        new_possibilities.push_back(new_possible);
+                        cout << "word: " << next_possible << endl;
                     }
                 }
             }
             
-            possibles_ = new_possibilities;
+            possibles_ = next_possibilities;
             
         }
     }
@@ -263,7 +283,7 @@ int main()
 
     sf::Text asl_letter = sf::Text("", font, 30);
     asl_letter.setColor(sf::Color(255, 255, 255, 170));
-    asl_letter.setPosition(100.f, 500.f);
+    asl_letter.setPosition(20.f, 400.f);
 
     Listener listener("./aspell_en_expanded", trainer, asl_letter);
     
