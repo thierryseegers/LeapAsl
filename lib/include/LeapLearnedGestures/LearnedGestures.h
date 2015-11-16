@@ -104,14 +104,28 @@ private:
             return;
         }
         
-        // There must be a single hand in the frame.
+        // Reject and reset if there is more than one hand in the frame. (A (temporary?) restriction.)
         if(controller.frame().hands().count() != 1)
         {
+            recorded_searches_.clear();
+            recorded_sample = now;
+
+            return;
+        }
+        
+        auto const& hand = controller.frame().hands()[0];
+        
+        // Reject and reset if low-confidence.
+        if(hand.confidence() < 0.2)
+        {
+            recorded_searches_.clear();
+            recorded_sample = now;
+
             return;
         }
         
         // Analyze the one hand present.
-        auto const& scores = poses_.search(controller.frame().hands()[0]);
+        auto const& scores = poses_.search(hand);
         for(auto const& score : scores)
         {
             recorded_searches_[score.second] += score.first;
