@@ -177,9 +177,11 @@ private:
 class Listener : public LearnedGestures::Listener
 {
 public:
-    Listener(string const& dictionary_path, LearnedGestures::Trainer const& trainer, sf::Text& text)
+    Listener(string const& dictionary_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& word, bool& restart)
         : LearnedGestures::Listener(trainer)
-        , text_(text)
+        , letter_(letter)
+        , word_(word)
+        , restart_(restart)
     {
         // Populate our dictionary trie.
         // We'll insert a '\0' to indicate valid words. e.g.:
@@ -190,18 +192,18 @@ public:
         // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
         std::ifstream dictionary_stream{dictionary_path};
         
-        std::string word;
-        while(std::getline(dictionary_stream, word))
+        std::string line;
+        while(std::getline(dictionary_stream, line))
         {
-            std::transform(word.begin(), word.end(), word.begin(), ::tolower);
-            dictionary_.insert(word.begin(), word.end())->insert('\0');
+            std::transform(line.begin(), line.end(), line.begin(), ::tolower);
+            dictionary_.insert(line.begin(), line.end())->insert('\0');
         }
 
     }
     
     virtual void onGesture(LearnedGestures::LearnedGesture const& gesture) override
     {
-        text_.setString(gesture.name());
+        letter_.setString(gesture.name());
         cout << gesture.name() << '\n';
     }
     
@@ -218,52 +220,68 @@ public:
             ss << top_match.second << " [" << top_match.first << "]\n";
         }
 
-        text_.setString(ss.str());
+        letter_.setString(ss.str());
         
         
-        vector<string> next_possibilities;
+        map<float, string> next_possibilities;
 
-        if(possibles_.empty())
+        if(possibles_.empty() || restart_)
         {
             cout << "starting over" << endl;
             
-            for(auto const& top_match : top_matches)
+            for(int i : {0, 1, 2, 3, 4})
             {
-                possibles_.push_back(string() + (char)::tolower(top_match.second[0]));
+                next_possibilities[i * top_matches[i].first] = string() + (char)::tolower(top_matches[i].second[0]);
             }
+            
+            restart_ = false;
         }
         else
         {
             cout << "incoming!" << endl;
             
+            float lowest_score = numeric_limits<float>::max();
+            string lowest_scoring_word;
+            
             for(auto const& possible : possibles_)
             {
                 for(int i : {0, 1, 2, 3, 4})
                 {
-                    string const next_possible = possible + (char)::tolower(top_matches[i].second[0]);
+                    string const next_possible = possible.second + (char)::tolower(top_matches[i].second[0]);
                     
                     auto validity = dictionary_.validate(next_possible.begin(), next_possible.end());
                     if(validity & trie<char>::valid)
                     {
-                        next_possibilities.push_back(next_possible);
+                        next_possibilities[possible.first + i * top_matches[i].first] = next_possible;
                     }
+                    
                     if(validity & trie<char>::correct)
                     {
-                        cout << "word: " << next_possible << endl;
+                        float score = possible.first + i * top_matches[i].first;
+                        if(score < lowest_score)
+                        {
+                            lowest_score = score;
+                            lowest_scoring_word = next_possible;
+                        }
                     }
                 }
             }
             
-            possibles_ = next_possibilities;
-            
+            cout << "lowest scoring word: " << lowest_scoring_word << endl;
+            word_.setString(lowest_scoring_word);
+
         }
+        
+        possibles_ = next_possibilities;
     }
     
 private:
-    sf::Text& text_;
+    sf::Text& letter_, &word_;
+    bool& restart_;
     
-    vector<string> possibles_;
+    map<float, string> possibles_;
     trie<char> dictionary_;
+    
 };
 
 int main()
@@ -284,8 +302,14 @@ int main()
     sf::Text asl_letter = sf::Text("", font, 30);
     asl_letter.setColor(sf::Color(255, 255, 255, 170));
     asl_letter.setPosition(20.f, 400.f);
+    
+    sf::Text asl_word = sf::Text("", font, 30);
+    asl_word.setColor(sf::Color(255, 255, 255, 170));
+    asl_word.setPosition(400.f, 400.f);
+    
+    bool restart = false;
 
-    Listener listener("./aspell_en_expanded", trainer, asl_letter);
+    Listener listener("./aspell_en_expanded", trainer, asl_letter, asl_word, restart);
     
     Leap::Controller controller;
     controller.addListener(listener);
@@ -354,6 +378,10 @@ int main()
                 {
                     trainer.capture(string(1, event.key.code + 'A'), controller.frame().hands()[0]);
                 }
+                else if(event.key.code == sf::Keyboard::Space)
+                {
+                    restart = true;
+                }
             }
         }
 
@@ -373,6 +401,9 @@ int main()
 
             // Draw the last recognized letter.
             window.draw(asl_letter);
+            
+            // Draw the current best word.
+            window.draw(asl_word);
         }
         window.popGLStates();
 
