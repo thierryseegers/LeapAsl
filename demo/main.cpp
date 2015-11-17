@@ -188,14 +188,14 @@ public:
         // b->\0
         //  ->e->\0
         //     ->a
-        //       ->n->\0
+        //        ->n->\0
         // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
-        std::ifstream dictionary_stream{dictionary_path};
+        ifstream dictionary_stream{dictionary_path};
         
-        std::string line;
-        while(std::getline(dictionary_stream, line))
+        string line;
+        while(getline(dictionary_stream, line))
         {
-            std::transform(line.begin(), line.end(), line.begin(), ::tolower);
+            transform(line.begin(), line.end(), line.begin(), ::tolower);
             dictionary_.insert(line.begin(), line.end())->insert('\0');
         }
 
@@ -269,7 +269,6 @@ public:
             
             cout << "lowest scoring word: " << lowest_scoring_word << endl;
             word_.setString(lowest_scoring_word);
-
         }
         
         possibles_ = next_possibilities;

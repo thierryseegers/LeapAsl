@@ -130,14 +130,12 @@ istream& operator>>(istream& i, Poses& g)
     g.poses_.clear();
     
     size_t size;
-    i >> size;
-    i.ignore();
+    i >> size >> ws;
     
     string name;
     for(size_t j = 0; j != size; ++j)
     {
-        i >> name;
-        i.ignore();
+        i >> name >> ws;
         
         for(auto& finger : g.poses_[name])
         {
@@ -147,7 +145,7 @@ istream& operator>>(istream& i, Poses& g)
             }
         }
 
-        i.ignore();
+        i >> ws;
     }
     
     return i;
