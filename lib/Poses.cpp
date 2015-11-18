@@ -14,12 +14,15 @@ namespace LearnedGestures { namespace detail
 
 using namespace std;
 
-float distance_squared(Poses::joint_position const& first, Poses::joint_position const& second)
+float distance_squared(Leap::Vector const& first, Leap::Vector const& second)
 {
     return pow(first.x - second.x, 2.) + pow(first.y - second.y, 2.) + pow(first.z - second.z, 2.);
 }
 
-float match(Poses::fingers_capture const& a, Poses::fingers_capture const& b, float const error_cap = numeric_limits<float>::max())
+// Returns the sum of the distances between Leap::Vectors of a and b.
+//
+// As an available optimization, will return as soon as error_cap is reached.
+float match(array<array<Leap::Vector, 4>, 5> const& a, array<array<Leap::Vector, 4>, 5> const& b, float const error_cap = numeric_limits<float>::max())
 {
     float error = 0.;
     
@@ -34,11 +37,12 @@ float match(Poses::fingers_capture const& a, Poses::fingers_capture const& b, fl
     return error;
 }
 
-Poses::fingers_capture normalize(Leap::Hand const& hand)
+// 
+array<array<Leap::Vector, 4>, 5> normalize(Leap::Hand const& hand)
 {
-    Poses::fingers_capture capture;
+    array<array<Leap::Vector, 4>, 5> capture;
     
-    auto const& normalized = normalized_hand_transform(hand);
+    auto const normalized = normalized_hand_transform(hand);
     auto const& fingers = hand.fingers();
     
     for(int f = 0; f != 5; ++f)
@@ -72,16 +76,16 @@ void Poses::capture(string const& name, Leap::Hand const& hand)
 
 string Poses::match(Leap::Hand const& hand) const
 {
-    auto const& normalized = normalize(hand);
+    auto const normalized = normalize(hand);
     
-    float minimum_error = numeric_limits<float>::max(), error;
+    float error_cap = numeric_limits<float>::max(), error;
     string name;
     
     for(auto const& pose : poses_)
     {
-        if((error = detail::match(pose.second, normalized, minimum_error)) < minimum_error)
+        if((error = detail::match(pose.second, normalized, error_cap)) < error_cap)
         {
-            minimum_error = error;
+            error_cap = error;
             name = pose.first;
         }
     }
@@ -89,15 +93,15 @@ string Poses::match(Leap::Hand const& hand) const
     return name;
 }
 
-map<float, string> Poses::search(Leap::Hand const& hand) const
+multimap<float, string> Poses::compare(Leap::Hand const& hand) const
 {
-    map<float, string> scores;
+    multimap<float, string> scores;
     
-    auto const& normalized = normalize(hand);
+    auto const normalized = normalize(hand);
     
     for(auto const& pose : poses_)
     {
-        scores[detail::match(pose.second, normalized)] = pose.first;
+        scores.emplace(detail::match(pose.second, normalized), pose.first);
     }
     
     return scores;

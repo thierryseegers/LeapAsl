@@ -200,13 +200,7 @@ public:
         }
 
     }
-    
-    virtual void onGesture(LearnedGestures::LearnedGesture const& gesture) override
-    {
-        letter_.setString(gesture.name());
-        cout << gesture.name() << '\n';
-    }
-    
+
     virtual void onGesture(map<float, string> const& matches) override
     {
         array<pair<float, string>, 5> top_matches;
