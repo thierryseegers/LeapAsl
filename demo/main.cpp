@@ -205,6 +205,8 @@ public:
     {
         array<pair<float, string>, 5> top_matches;
         copy_n(matches.begin(), 5, top_matches.begin());
+        
+        auto const indices = {0, 1, 2, 3, 4};
 
         static stringstream ss;
         ss.str("");
@@ -223,7 +225,7 @@ public:
         {
             cout << "starting over" << endl;
             
-            for(int i : {0, 1, 2, 3, 4})
+            for(int i : indices)
             {
                 next_possibilities[i * top_matches[i].first] = string() + (char)::tolower(top_matches[i].second[0]);
             }
@@ -239,7 +241,7 @@ public:
             
             for(auto const& possible : possibles_)
             {
-                for(int i : {0, 1, 2, 3, 4})
+                for(int i : indices)
                 {
                     string const next_possible = possible.second + (char)::tolower(top_matches[i].second[0]);
                     

@@ -48,10 +48,11 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
 
-    Listener(Trainer const& trainer, duration const& hold_time = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100))
-    : hold_time(hold_time)
-    , sample_rate(sample_rate)
-    , next_sample(std::chrono::high_resolution_clock::now())
+    Listener(Trainer const& trainer, duration const& hold_time = std::chrono::milliseconds(1500), duration const& down_time = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100))
+    : hold_time_(hold_time)
+    , down_time_(down_time)
+    , sample_rate_(sample_rate)
+    , next_sample_(std::chrono::high_resolution_clock::now())
     , poses_(trainer.poses_)
     {}
     
@@ -64,7 +65,7 @@ private:
         auto const now = std::chrono::high_resolution_clock::now();
         
         // If we're not scheduled to take a sample yet, return immediately.
-        if(now < next_sample)
+        if(now < next_sample_)
         {
             return;
         }
@@ -72,8 +73,10 @@ private:
         // Reject and reset if there is more than one hand in the frame. (A (temporary?) restriction.)
         if(controller.frame().hands().count() != 1)
         {
-            recorded_searches_.clear();
-            recorded_sample = now;
+            top_gesture_.clear();
+            recorded_gestures_.clear();
+
+            recorded_sample_ = now;
 
             return;
         }
@@ -83,8 +86,10 @@ private:
         // Reject and reset if low-confidence.
         if(hand.confidence() < 0.2)
         {
-            recorded_searches_.clear();
-            recorded_sample = now;
+            top_gesture_.clear();
+            recorded_gestures_.clear();
+            
+            recorded_sample_ = now;
 
             return;
         }
@@ -93,7 +98,7 @@ private:
         auto const scores = poses_.compare(hand);
         for(auto const& score : scores)
         {
-            recorded_searches_[score.second] += score.first;
+            recorded_gestures_[score.second] += score.first;
         }
         
         // If the top current gesture is different from the top recorded one, replace the information we have and start from scratch.
@@ -103,30 +108,29 @@ private:
         {
             top_gesture_ = scores.begin()->second;
 
-            recorded_searches_.clear();
-            recorded_sample = now;
+            recorded_gestures_.clear();
+            recorded_sample_ = now;
         }
-        else if(now - recorded_sample >= hold_time)
+        else if(now - recorded_sample_ >= hold_time_)
         {
             std::map<float, std::string> matches;
-            for(auto const& recorded_search : recorded_searches_)
+            for(auto const& recorded_search : recorded_gestures_)
             {
                 matches[recorded_search.second] = recorded_search.first;
             }
             onGesture(matches);
             
-            recorded_searches_.clear();
-            recorded_sample = now;
+            top_gesture_.clear();
+            recorded_gestures_.clear();
+            next_sample_ = now + down_time_;
         }
     }
     
-    duration const hold_time, sample_rate;
-    time_point next_sample;
-    
-    time_point recorded_sample;
+    duration const hold_time_, down_time_, sample_rate_;
+    time_point recorded_sample_, next_sample_;
     
     std::string top_gesture_;
-    std::map<std::string, float> recorded_searches_;
+    std::map<std::string, float> recorded_gestures_;
     
     detail::Poses poses_;
 };
