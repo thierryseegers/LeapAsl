@@ -1,8 +1,7 @@
-#include "Listener.h"
+#include "LeapLearnedGestures/Listener.h"
 
-#include "Trainer.h"
-
-#include "detail/Poses.h"
+#include "LeapLearnedGestures/Trainer.h"
+#include "LeapLearnedGestures/detail/Poses.h"
 
 #include <LeapSDK/Leap.h>
 

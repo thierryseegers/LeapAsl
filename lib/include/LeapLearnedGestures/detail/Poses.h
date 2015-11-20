@@ -1,5 +1,7 @@
 #pragma once
 
+#include "LeapLearnedGestures/Utility.h"
+
 #include <LeapSDK/Leap.h>
 
 #include <array>
@@ -26,11 +28,7 @@ private:
     friend std::ostream& operator<<(std::ostream&, Poses const&);
     friend std::istream& operator>>(std::istream&, Poses&);
     
-    using joint_position = Leap::Vector;
-    using finger_capture = std::array<joint_position, 4>;
-    using fingers_capture = std::array<finger_capture, 5>;
-    
-    std::map<std::string, fingers_capture> poses_;
+    std::map<std::string, fingers_position> poses_;
 };
 
 }}
