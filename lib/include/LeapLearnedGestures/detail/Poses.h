@@ -22,7 +22,7 @@ public:
     std::string match(Leap::Hand const& hand) const;
     
     // Returns sorted scores of all gestures.
-    std::multimap<float, std::string> compare(Leap::Hand const& hand) const;
+    std::multimap<double, std::string> compare(Leap::Hand const& hand) const;
     
 private:
     friend std::ostream& operator<<(std::ostream&, Poses const&);

@@ -19,7 +19,7 @@ fingers_position to_position(Leap::Hand const& hand);
 //! The sum of the squared distances between all joints of \a and \b.
 //!
 //! As an optimization, will return as soon as delta_cap is reached.
-float difference(fingers_position const& a, fingers_position const& b, float const delta_cap = std::numeric_limits<float>::max());
+double difference(fingers_position const& a, fingers_position const& b, double const delta_cap = std::numeric_limits<double>::max());
 
 
 //! Computes the transformation matrix to apply to joint coordinates so that

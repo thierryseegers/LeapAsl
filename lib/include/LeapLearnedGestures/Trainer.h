@@ -9,7 +9,7 @@
 
 namespace LearnedGestures
 {
-    
+
 class Listener;
     
 class Trainer

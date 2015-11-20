@@ -3,6 +3,7 @@
 #include "Trainer.h"
 
 #include "detail/Poses.h"
+#include "Utility.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -19,18 +20,18 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
     
-    Listener(Trainer const& trainer, duration const& hold_time = std::chrono::milliseconds(1500), duration const& down_time = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100));
+    Listener(Trainer const& trainer, duration const& hold_duration = std::chrono::milliseconds(1500), duration const& down_duration = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100));
     
-    virtual void onGesture(std::map<float, std::string> const& matches);
+    virtual void onGesture(std::map<double, std::string> const& matches);
     
 private:
     void onFrame(Leap::Controller const& controller);
     
-    duration const hold_time_, down_time_, sample_rate_;
-    time_point recorded_sample_, next_sample_;
+    duration const hold_duration_, down_duration_, sample_rate_;
+    time_point anchor_sample_, next_sample_;
     
-    std::string top_gesture_;
-    std::map<std::string, float> recorded_gestures_;
+    fingers_position anchor_;
+    std::map<std::string, double> scores_;
     
     detail::Poses poses_;
 };

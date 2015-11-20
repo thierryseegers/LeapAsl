@@ -7,14 +7,14 @@ namespace LearnedGestures
 
 using namespace std;
     
-float distance_squared(Leap::Vector const& first, Leap::Vector const& second)
+double distance_squared(Leap::Vector const& first, Leap::Vector const& second)
 {
     return pow(first.x - second.x, 2.) + pow(first.y - second.y, 2.) + pow(first.z - second.z, 2.);
 }
 
-float difference(fingers_position const& a, fingers_position const& b, float const delta_cap)
+double difference(fingers_position const& a, fingers_position const& b, double const delta_cap)
 {
-    float delta = 0.;
+    double delta = 0.;
     
     for(auto i = 0; i != a.size() && delta < delta_cap; ++i)
     {

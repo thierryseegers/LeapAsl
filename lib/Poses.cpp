@@ -23,7 +23,7 @@ string Poses::match(Leap::Hand const& hand) const
 {
     auto const positions = to_position(hand);
     
-    float delta_cap = numeric_limits<float>::max(), delta;
+    double delta_cap = numeric_limits<double>::max(), delta;
     string name;
     
     for(auto const& pose : poses_)
@@ -38,9 +38,9 @@ string Poses::match(Leap::Hand const& hand) const
     return name;
 }
 
-multimap<float, string> Poses::compare(Leap::Hand const& hand) const
+multimap<double, string> Poses::compare(Leap::Hand const& hand) const
 {
-    multimap<float, string> scores;
+    multimap<double, string> scores;
     
     auto const normalized = to_position(hand);
     
