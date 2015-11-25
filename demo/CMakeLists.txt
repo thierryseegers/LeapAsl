@@ -1,18 +1,22 @@
-find_package(Boost REQUIRED COMPONENTS system)
-#find_package(FFT)
+find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(BZip2 REQUIRED)
+find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
+find_package(ZLIB REQUIRED)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/lib/include
     ${BOOST_INCLUDEDIR}
+    ${KenLM_INCLUDE_DIRS}
     ${Leap_INCLUDE_DIR}
     ${Leap_INCLUDE_DIR}/LeapSDK)
 
 add_executable(demo
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtil.cpp
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
+    respacer.h
     main.cpp)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -22,16 +26,30 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         COMPILE_FLAGS "-Wno-comment -Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-variable")
 endif()
 
+set_target_properties(demo PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON)
+
 target_link_libraries(demo
     LearnedGestures
+    ${Boost_LIBRARIES}
+    ${BZIP2_LIBRARIES}
+    ${KenLM_LIBRARIES}
     ${Leap_BUILD_LIBRARIES}
-    ${SFML_LIBRARIES})
+    ${SFML_LIBRARIES}
+    ${ZLIB_LIBRARIES})
 
 if(APPLE)
     target_link_libraries(demo
         "-framework GLUT"
         "-framework OpenGL")
 endif()
+
+file(COPY
+        ${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded
+        ${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet.mmap
+    DESTINATION
+        ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(TARGET demo POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:demo>/resources)
