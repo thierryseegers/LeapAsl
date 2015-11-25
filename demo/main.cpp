@@ -1,5 +1,7 @@
+#include "respacer.h"
+
 #include "LeapLearnedGestures/LearnedGestures.h"
-#include "LeapLearnedGestures/NormalizedHandTransform.h"
+#include "LeapLearnedGestures/Utility.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
@@ -9,11 +11,14 @@
 #include <SFML/OpenGL.hpp>
 #include <SFML/Window.hpp>
 
+#include <algorithm>
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -93,124 +98,27 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
-template<typename T>
-class trie
-{
-public:
-    trie<T>* insert(T const& t)
-    {
-        return &children_[t];
-    }
-    
-    template<typename I>
-    trie<T>* insert(I begin, I end)
-    {
-        trie<T> *p = this;
-        
-        while(begin != end)
-        {
-            p = p->insert(*begin);
-            ++begin;
-        }
-        
-        return p;
-    }
-    
-    const trie<T>* find(T const& t) const
-    {
-        auto i = children_.find(t);
-        
-        return i == children_.end() ? nullptr : &i->second;
-    }
-    
-    size_t size() const
-    {
-        return children_.size();
-    }
-    
-    size_t count(T const& t) const
-    {
-        return children_.count(t);
-    }
-    
-    enum validity
-    {
-        invalid = 0x0,
-        valid = 0x1,
-        correct = 0x2
-    };
-    
-    template<typename I>
-    validity validate(I begin, I end) const
-    {
-        const trie<T> *p = this;
-        
-        while(p && begin != end)
-        {
-            p = p->find(*begin);
-            ++begin;
-        }
-        
-        if(p)
-        {
-            if(!p->count('\0'))
-            {
-                return valid;
-            }
-            else if(p->size() > 1)
-            {
-                return (validity)(valid | correct);
-            }
-            else
-            {
-                return correct;
-            }
-        }
-        
-        return invalid;
-    }
-    
-private:
-    map<T, trie<T>> children_;
-};
-
 class Listener : public LearnedGestures::Listener
 {
 public:
-    Listener(string const& dictionary_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& word, bool& restart)
+    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& word, bool& restart)
         : LearnedGestures::Listener(trainer)
         , letter_(letter)
         , word_(word)
         , restart_(restart)
-    {
-        // Populate our dictionary trie.
-        // We'll insert a '\0' to indicate valid words. e.g.:
-        // b->\0
-        //  ->e->\0
-        //     ->a
-        //        ->n->\0
-        // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
-        ifstream dictionary_stream{dictionary_path};
-        
-        string line;
-        while(getline(dictionary_stream, line))
-        {
-            transform(line.begin(), line.end(), line.begin(), ::tolower);
-            dictionary_.insert(line.begin(), line.end())->insert('\0');
-        }
+        , dictionary_(dictionary_path)
+        //, respacer_(dictionary_path, language_model_path)
+    {}
 
-    }
-
-    virtual void onGesture(map<float, string> const& matches) override
+    virtual void onGesture(map<double, string> const& matches) override
     {
-        array<pair<float, string>, 5> top_matches;
+        static auto const indices = {0, 1, 2, 3, 4};
+        static stringstream ss;
+
+        array<pair<double, string>, 5> top_matches;
         copy_n(matches.begin(), 5, top_matches.begin());
         
-        auto const indices = {0, 1, 2, 3, 4};
-
-        static stringstream ss;
         ss.str("");
-        
         for(auto const& top_match : top_matches)
         {
             ss << top_match.second << " [" << top_match.first << "]\n";
@@ -219,7 +127,7 @@ public:
         letter_.setString(ss.str());
         
         
-        map<float, string> next_possibilities;
+        multimap<double, string> next_possibilities;
 
         if(possibles_.empty() || restart_)
         {
@@ -227,7 +135,8 @@ public:
             
             for(int i : indices)
             {
-                next_possibilities[i * top_matches[i].first] = string() + (char)::tolower(top_matches[i].second[0]);
+                next_possibilities.emplace((i + 1) * top_matches[i].first, string() + (char)::tolower(top_matches[i].second[0]));
+                //next_possibilities.emplace(0, string() + (char)::tolower(top_matches[i].second[0]));
             }
             
             restart_ = false;
@@ -236,8 +145,9 @@ public:
         {
             cout << "incoming!" << endl;
             
-            float lowest_score = numeric_limits<float>::max();
+            double score, lowest_score = numeric_limits<double>::max();
             string lowest_scoring_word;
+            //vector<string> lowest_scoring_sentence;
             
             for(auto const& possible : possibles_)
             {
@@ -245,38 +155,65 @@ public:
                 {
                     string const next_possible = possible.second + (char)::tolower(top_matches[i].second[0]);
                     
-                    auto validity = dictionary_.validate(next_possible.begin(), next_possible.end());
-                    if(validity & trie<char>::valid)
+                    auto const validity = dictionary_.validate(next_possible.begin(), next_possible.end());
+                    if(validity & detail::trie<char>::valid)
                     {
-                        next_possibilities[possible.first + i * top_matches[i].first] = next_possible;
+                        next_possibilities.emplace(possible.first + (i + 1) * top_matches[i].first, next_possible);
                     }
                     
-                    if(validity & trie<char>::correct)
+                    if(validity & detail::trie<char>::correct)
                     {
-                        float score = possible.first + i * top_matches[i].first;
+                        float score = possible.first + (i + 1) * top_matches[i].first;
                         if(score < lowest_score)
                         {
                             lowest_score = score;
                             lowest_scoring_word = next_possible;
                         }
                     }
+                    /*
+                     auto const respaced = respacer_.respace(next_possible);
+                     score = (possible.first + (i + 1) * top_matches[i].first) * respaced.size();
+                     //score = respaced.size();
+                     
+                     if(score < lowest_score)
+                     {
+                     lowest_score = score;
+                     lowest_scoring_sentence = respaced;
+                     }
+                     
+                     auto const concatenated = accumulate(respaced.begin(), respaced.end(), string());
+                     next_possibilities.emplace(possible.first + (i + 1) * top_matches[i].first, concatenated);
+                     */
                 }
             }
             
             cout << "lowest scoring word: " << lowest_scoring_word << endl;
             word_.setString(lowest_scoring_word);
+            //stringstream ss;
+            //copy(lowest_scoring_sentence.begin(), lowest_scoring_sentence.end(), ostream_iterator<string>(ss, " "));
+
+            //cout << "lowest scoring sentence: \"" << ss.str() << "\"\n";
+            //word_.setString(ss.str());
         }
         
-        possibles_ = next_possibilities;
+        //possibles_ = next_possibilities;
+        possibles_.clear();
+        possibles_.insert(next_possibilities.begin(), next(next_possibilities.begin(), min(next_possibilities.size(), (size_t)100)));
+        
+        cout << "current top possibles:\n";
+        for(auto const& p : possibles_)
+        {
+            cout << p.second << "[" << p.first << "]" << endl;
+        }
     }
     
 private:
     sf::Text& letter_, &word_;
     bool& restart_;
     
-    map<float, string> possibles_;
-    trie<char> dictionary_;
-    
+    detail::trie<char> dictionary_;
+    //respacer respacer_;
+    multimap<double, string> possibles_;
 };
 
 int main()
@@ -304,7 +241,7 @@ int main()
     
     bool restart = false;
 
-    Listener listener("./aspell_en_expanded", trainer, asl_letter, asl_word, restart);
+    Listener listener("./aspell_en_expanded", "./romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
     
     Leap::Controller controller;
     controller.addListener(listener);
@@ -391,7 +328,7 @@ int main()
             drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
 
             // Draw the hand normalized.
-            auto const normalized = normalized_hand_transform(hand);
+            auto const normalized = LearnedGestures::normalized_hand_transform(hand);
             drawTransformedSkeletonHand(hand, normalized, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
 
             // Draw the last recognized letter.

@@ -84,21 +84,22 @@ void Listener::onFrame(Leap::Controller const& controller)
         scores_[score.second] += score.first;
     }
     
-    // If the top current gesture is different from the top recorded one, replace the information we have and start from scratch.
-    // Else, if the current gesture is the same as the recorded one and we have past our \ref hold_time, report what we have and reset the information.
-    // Else, do nothing and we will keep analyzing new samples.
+    
+    // If we have past our \ref hold_duration_, report what we have, reset the information and schedule the next sample analysis for \ref down_duration_ later.
+    // Else, just set the next sample analysis for \ref sample_rate_ later.
     if(now - anchor_sample_ >= hold_duration_)
     {
-        // Order gesture names by overall scores.
+        // Order gesture names by their scores.
         map<double, string> matches;
         for(auto const& score : scores_)
         {
-            matches[score.second] = score.first;
+            matches[score.second / 1000] = score.first;
         }
         onGesture(matches);
         
         anchor_ = fingers_position();
         scores_.clear();
+        
         next_sample_ = now + down_duration_;
     }
     else

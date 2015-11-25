@@ -47,6 +47,27 @@ namespace detail
     class trie
     {
     public:
+        trie()
+        {}
+        
+        trie(std::string const& dictionary_path)
+        {
+            // We insert a '\0' to indicate valid words. e.g.:
+            // b->\0
+            //  ->e->\0
+            //     ->a
+            //       ->n->\0
+            // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
+            std::ifstream dictionary_stream{dictionary_path};
+            
+            std::string word;
+            while(std::getline(dictionary_stream, word))
+            {
+                std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+                insert(word.begin(), word.end())->insert('\0');
+            }
+        }
+        
         trie<T>* insert(T const& t)
         {
             return &children_[t];
@@ -66,11 +87,16 @@ namespace detail
             return p;
         }
         
-        trie<T>* find(T const& t)
+        const trie<T>* find(T const& t) const
         {
             auto i = children_.find(t);
             
             return i == children_.end() ? nullptr : &i->second;
+        }
+        
+        size_t size() const
+        {
+            return children_.size();
         }
         
         size_t count(T const& t) const
@@ -78,6 +104,43 @@ namespace detail
             return children_.count(t);
         }
 
+        enum validity
+        {
+            invalid = 0x0,
+            valid = 0x1,
+            correct = 0x2
+        };
+        
+        template<typename I>
+        validity validate(I begin, I end) const
+        {
+            const trie<T> *p = this;
+        
+            while(p && begin != end)
+            {
+                p = p->find(*begin);
+                ++begin;
+            }
+        
+            if(p)
+            {
+                if(!p->count('\0'))
+                {
+                    return valid;
+                }
+                else if(p->size() > 1)
+                {
+                    return (validity)(valid | correct);
+                }
+                else
+                {
+                    return correct;
+                }
+            }
+        
+            return invalid;
+        }
+        
     private:
         std::map<T, trie<T>> children_;
     };
@@ -95,24 +158,10 @@ class respacer
 public:
     //! \param dictionary_path  Path to a file containing list of words in alphabetical order, one word per line.
     //! \param language_model_path  Path to a language model file for \c lm::ngram::Model to use.
-    respacer(std::string const& dictionary_path, std::string const& language_model_path) : model_(language_model_path.c_str())
-    {
-        // Populate our dictionary trie.
-        // We'll insert a '\0' to indicate valid words. e.g.:
-        // b->\0
-        //  ->e->\0
-        //     ->a
-        //       ->n->\0
-        // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
-        std::ifstream dictionary_stream{dictionary_path};
-        
-        std::string word;
-        while(std::getline(dictionary_stream, word))
-        {
-            std::transform(word.begin(), word.end(), word.begin(), ::tolower);
-            dictionary_.insert(word.begin(), word.end())->insert('\0');
-        }
-    }
+    respacer(std::string const& dictionary_path, std::string const& language_model_path)
+        : model_(language_model_path.c_str())
+        , dictionary_(dictionary_path)
+    {}
     
     //! Given a string of characters with no spaces, computes the most likely original sentence.
     //!
@@ -169,7 +218,7 @@ private:
             std::vector<std::string::size_type> head_lengths;
             
             {
-                detail::trie<char> *p = &dictionary_;
+                const detail::trie<char> *p = &dictionary_;
                 
                 for(std::string::size_type i = 0; p && i != remaining_letters.size(); ++i)
                 {
