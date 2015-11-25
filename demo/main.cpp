@@ -321,16 +321,19 @@ int main()
         
         window.pushGLStates();
         {
-            Leap::Hand const& hand = controller.frame().hands()[0];
+            auto const& hand = controller.frame().hands()[0];
             
-            // Draw the hand with its original rotation and scale.
-            auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition() + Leap::Vector{-200, 0, 0}};
-            drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
+            if(hand.isValid())
+            {
+                // Draw the hand with its original rotation and scale but offset to the left a tad.
+                auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition() + Leap::Vector{-200, 0, 0}};
+                drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
 
-            // Draw the hand normalized.
-            auto const normalized = LearnedGestures::normalized_hand_transform(hand);
-            drawTransformedSkeletonHand(hand, normalized, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
-
+                // Draw the hand normalized.
+                auto const normalized = LearnedGestures::normalized_hand_transform(hand);
+                drawTransformedSkeletonHand(hand, normalized, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
+            }
+            
             // Draw the last recognized letter.
             window.draw(asl_letter);
             
