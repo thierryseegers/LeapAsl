@@ -106,8 +106,8 @@ public:
         , letter_(letter)
         , word_(word)
         , restart_(restart)
-        , dictionary_(dictionary_path)
-        //, respacer_(dictionary_path, language_model_path)
+        //, dictionary_(dictionary_path)
+        , respacer_(dictionary_path, language_model_path)
     {}
 
     virtual void onGesture(map<double, string> const& matches) override
@@ -127,16 +127,15 @@ public:
         letter_.setString(ss.str());
         
         
-        multimap<double, string> next_possibilities;
-
         if(possibles_.empty() || restart_)
         {
             cout << "starting over" << endl;
             
+            possibles_.clear();
             for(int i : indices)
             {
-                next_possibilities.emplace((i + 1) * top_matches[i].first, string() + (char)::tolower(top_matches[i].second[0]));
-                //next_possibilities.emplace(0, string() + (char)::tolower(top_matches[i].second[0]));
+                //next_possibilities.emplace((i + 1) * top_matches[i].first, string() + (char)::tolower(top_matches[i].second[0]));
+                possibles_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
             }
             
             restart_ = false;
@@ -146,15 +145,16 @@ public:
             cout << "incoming!" << endl;
             
             double score, lowest_score = numeric_limits<double>::max();
-            string lowest_scoring_word;
-            //vector<string> lowest_scoring_sentence;
+            //string lowest_scoring_word;
+            vector<string> lowest_scoring_sentence;
+            multimap<double, pair<double, string>> scored_possibles;
             
             for(auto const& possible : possibles_)
             {
                 for(int i : indices)
                 {
                     string const next_possible = possible.second + (char)::tolower(top_matches[i].second[0]);
-                    
+                    /*
                     auto const validity = dictionary_.validate(next_possible.begin(), next_possible.end());
                     if(validity & detail::trie<char>::valid)
                     {
@@ -170,40 +170,46 @@ public:
                             lowest_scoring_word = next_possible;
                         }
                     }
-                    /*
-                     auto const respaced = respacer_.respace(next_possible);
-                     score = (possible.first + (i + 1) * top_matches[i].first) * respaced.size();
-                     //score = respaced.size();
-                     
-                     if(score < lowest_score)
-                     {
-                     lowest_score = score;
-                     lowest_scoring_sentence = respaced;
-                     }
-                     
-                     auto const concatenated = accumulate(respaced.begin(), respaced.end(), string());
-                     next_possibilities.emplace(possible.first + (i + 1) * top_matches[i].first, concatenated);
-                     */
+                    */
+                    
+                    auto const respaced = respacer_.respace(next_possible, score);
+                    score = (possible.first + (i + 1) * top_matches[i].first) * -score;
+                    
+                    if(score < lowest_score)
+                    {
+                        lowest_score = score;
+                        lowest_scoring_sentence = respaced;
+                    }
+
+                    auto const concatenated = accumulate(respaced.begin(), respaced.end(), string());
+                    
+                    scored_possibles.emplace(score, make_pair(possible.first + (i + 1) * top_matches[i].first, concatenated));
+//                     next_possibles.emplace(possible.first + (i + 1) * top_matches[i].first, concatenated);
+                    
                 }
             }
             
-            cout << "lowest scoring word: " << lowest_scoring_word << endl;
-            word_.setString(lowest_scoring_word);
-            //stringstream ss;
-            //copy(lowest_scoring_sentence.begin(), lowest_scoring_sentence.end(), ostream_iterator<string>(ss, " "));
+            //cout << "lowest scoring word: " << lowest_scoring_word << endl;
+            //word_.setString(lowest_scoring_word);
+            stringstream ss;
+            copy(lowest_scoring_sentence.begin(), lowest_scoring_sentence.end(), ostream_iterator<string>(ss, " "));
 
-            //cout << "lowest scoring sentence: \"" << ss.str() << "\"\n";
-            //word_.setString(ss.str());
+            cout << "lowest scoring sentence: \"" << ss.str() << "\"\n";
+            word_.setString(ss.str());
+            
+            possibles_.clear();
+            for(auto i = scored_possibles.begin(); i != next(scored_possibles.begin(), min(scored_possibles.size(), (size_t)125)); ++i)
+            {
+                possibles_.insert(i->second);
+            }
         }
         
         //possibles_ = next_possibilities;
-        possibles_.clear();
-        possibles_.insert(next_possibilities.begin(), next(next_possibilities.begin(), min(next_possibilities.size(), (size_t)100)));
-        
+
         cout << "current top possibles:\n";
         for(auto const& p : possibles_)
         {
-            cout << p.second << "[" << p.first << "]" << endl;
+            cout << p.second << " [" << p.first << "]" << endl;
         }
     }
     
@@ -211,8 +217,8 @@ private:
     sf::Text& letter_, &word_;
     bool& restart_;
     
-    detail::trie<char> dictionary_;
-    //respacer respacer_;
+    //detail::trie<char> dictionary_;
+    respacer respacer_;
     multimap<double, string> possibles_;
 };
 
@@ -282,7 +288,6 @@ int main()
     
     // Look here
     gluLookAt(0, 300, 250, 0., 0., 0., 0., 1., 0.);
-    
 
     
     // Start game loop
@@ -306,7 +311,8 @@ int main()
             
             if(event.type == sf::Event::KeyPressed)
             {
-                if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
+                if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z &&
+                   controller.frame().hands()[0].isValid())
                 {
                     trainer.capture(string(1, event.key.code + 'A'), controller.frame().hands()[0]);
                 }
