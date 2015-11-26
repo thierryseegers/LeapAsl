@@ -168,14 +168,27 @@ public:
     //! Invokes companion function. This way, we have a clean signature.
     //!
     //! \param letters A string of characters containing alphabetical characters exclusively.
+    //! \param score The score returned from the language model analysis.
+    //!
+    //! \return A word sequence.
+    std::vector<std::string> respace(std::string const& letters, double& score)
+    {
+        std::vector<std::string> sentence;
+        
+        respace(letters, score = std::numeric_limits<double>::lowest(), sentence);
+
+        return sentence;
+    }
+    
+    //! Given a string of characters with no spaces, computes the most likely original sentence.
+    //!
+    //! \param letters A string of characters containing alphabetical characters exclusively.
+    //!
     //! \return A word sequence.
     std::vector<std::string> respace(std::string const& letters)
     {
-        std::pair<double, std::vector<std::string>> best(std::numeric_limits<double>::lowest(), {});
-        
-        respace(letters, best);
-        
-        return best.second;
+        double dummy;
+        return respace(letters, dummy);
     }
     
 private:
@@ -188,7 +201,7 @@ private:
     //! \param remaining_letters The letters to be analyzed.
     //! \param best The word sequence with the highest score.
     //! \param data The stack of current score, word sequence and \c lm::ngram::State.
-    void respace(std::string const& remaining_letters, std::pair<double, std::vector<std::string>>& best, std::vector<std::tuple<double, std::string, lm::ngram::State>> const& data = {})
+    void respace(std::string const& remaining_letters, double& highest_score, std::vector<std::string>& best_sentence, std::vector<std::tuple<double, std::string, lm::ngram::State>> const& data = {})
     {
         if(remaining_letters.empty())
         {
@@ -196,14 +209,13 @@ private:
             // Additionally score the end-of-sentence tag and keep the results if it still outscores the current best.
             
             lm::ngram::State out_state;
-            double score = std::get<0>(data.back()) + model_.Score(std::get<2>(data.back()), model_.GetVocabulary().Index("</s>"), out_state);
+            double const score = std::get<0>(data.back()) + model_.Score(std::get<2>(data.back()), model_.GetVocabulary().Index("</s>"), out_state);
             
-            if(score > best.first)
+            if(score > highest_score)
             {
-                std::vector<std::string> words;
-                std::transform(data.begin(), data.end(), back_inserter(words), [](auto const& t){ return std::get<1>(t); });
-                
-                best = {score, words};
+                highest_score = score;
+                best_sentence.clear();
+                std::transform(data.begin(), data.end(), back_inserter(best_sentence), [](auto const& t){ return std::get<1>(t); });
             }
         }
         else
@@ -246,12 +258,12 @@ private:
                 double score = data.size() ? std::get<0>(data.back()) : 0.;
                 score += model_.Score(in_state, model_.GetVocabulary().Index(word), out_state);
                 
-                if(score > best.first)
+                if(score > highest_score)
                 {
                     auto d = data;
                     d.emplace_back(score, word, out_state);
                     
-                    respace(remaining_letters.substr(word_length), best, d);
+                    respace(remaining_letters.substr(word_length), highest_score, best_sentence, d);
                 }
             }
         }
