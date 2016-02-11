@@ -79,12 +79,13 @@ istream& operator>>(istream& i, Poses& g)
     g.poses_.clear();
     
     size_t size;
-    i >> size >> ws;
+    i >> size;
+    i.ignore();
     
     string name;
     for(size_t j = 0; j != size; ++j)
     {
-        i >> name >> ws;
+        getline(i, name);
         
         for(auto& finger : g.poses_[name])
         {

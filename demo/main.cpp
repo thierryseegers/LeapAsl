@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -106,8 +107,8 @@ public:
         , letter_(letter)
         , word_(word)
         , restart_(restart)
-        //, dictionary_(dictionary_path)
-        , respacer_(dictionary_path, language_model_path)
+        , dictionary_(dictionary_path)
+        //, respacer_(dictionary_path, language_model_path)
     {}
 
     virtual void onGesture(map<double, string> const& matches) override
@@ -121,95 +122,90 @@ public:
         ss.str("");
         for(auto const& top_match : top_matches)
         {
-            ss << top_match.second << " [" << top_match.first << "]\n";
+            ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
         }
 
         letter_.setString(ss.str());
         
         
-        if(possibles_.empty() || restart_)
+        if(sentences_.empty() ||
+           restart_)
         {
-            cout << "starting over" << endl;
+            cout << ">reset" << endl;
             
-            possibles_.clear();
+            //possibles_.clear();
+            sentences_.clear();
             for(int i : indices)
             {
                 //next_possibilities.emplace((i + 1) * top_matches[i].first, string() + (char)::tolower(top_matches[i].second[0]));
-                possibles_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
+                //possibles_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
+                //current_word_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
+                sentences_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
             }
             
             restart_ = false;
         }
         else
         {
-            cout << "incoming!" << endl;
+            cout << ">next" << endl;
             
-            double score, lowest_score = numeric_limits<double>::max();
+            //double score, lowest_score = numeric_limits<double>::max();
             //string lowest_scoring_word;
-            vector<string> lowest_scoring_sentence;
-            multimap<double, pair<double, string>> scored_possibles;
+            //vector<string> lowest_scoring_sentence;
+            //multimap<double, pair<double, string>> scored_possibles;
             
-            for(auto const& possible : possibles_)
+            multimap<double, string> sentences;
+            
+            for(auto const& sentence : sentences_)
             {
+                auto const last_space_ix = sentence.second.rfind(' ');
+                auto const last_word = (last_space_ix == string::npos ? sentence.second : sentence.second.substr(last_space_ix + 1));
+                
                 for(int i : indices)
                 {
-                    string const next_possible = possible.second + (char)::tolower(top_matches[i].second[0]);
-                    /*
-                    auto const validity = dictionary_.validate(next_possible.begin(), next_possible.end());
-                    if(validity & detail::trie<char>::valid)
-                    {
-                        next_possibilities.emplace(possible.first + (i + 1) * top_matches[i].first, next_possible);
-                    }
+                    char const c = (char)::tolower(top_matches[i].second[0]);
                     
-                    if(validity & detail::trie<char>::correct)
+                    if(c == ' ')
                     {
-                        float score = possible.first + (i + 1) * top_matches[i].first;
-                        if(score < lowest_score)
+                        if(!last_word.empty())  // Do nothing on double spaces.
                         {
-                            lowest_score = score;
-                            lowest_scoring_word = next_possible;
+                            auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
+                            if(validity & detail::trie<char>::correct)
+                            {
+                                sentences.emplace(sentence.first + (i + 1) * top_matches[i].first, sentence.second + ' ');
+                            }
                         }
                     }
-                    */
-                    
-                    auto const respaced = respacer_.respace(next_possible, score);
-                    score = (possible.first + (i + 1) * top_matches[i].first) * -score;
-                    
-                    if(score < lowest_score)
+                    else if(c == '.')
                     {
-                        lowest_score = score;
-                        lowest_scoring_sentence = respaced;
+                        auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
+                        if(validity & detail::trie<char>::correct)
+                        {
+                            cout << ">sentence: " << sentence.second << endl;
+                        }
                     }
-
-                    auto const concatenated = accumulate(respaced.begin(), respaced.end(), string());
-                    
-                    scored_possibles.emplace(score, make_pair(possible.first + (i + 1) * top_matches[i].first, concatenated));
-//                     next_possibles.emplace(possible.first + (i + 1) * top_matches[i].first, concatenated);
-                    
+                    else
+                    {
+                        auto const next_word = last_word + c;
+                        
+                        auto const validity = dictionary_.validate(next_word.begin(), next_word.end());
+                        if(validity & detail::trie<char>::valid)
+                        {
+                            sentences.emplace(sentence.first + (i + 1) * top_matches[i].first, sentence.second + c);
+                        }
+                    }
                 }
             }
-            
-            //cout << "lowest scoring word: " << lowest_scoring_word << endl;
-            //word_.setString(lowest_scoring_word);
-            stringstream ss;
-            copy(lowest_scoring_sentence.begin(), lowest_scoring_sentence.end(), ostream_iterator<string>(ss, " "));
 
-            cout << "lowest scoring sentence: \"" << ss.str() << "\"\n";
-            word_.setString(ss.str());
+            swap(sentences_, sentences);
             
-            possibles_.clear();
-            for(auto i = scored_possibles.begin(); i != next(scored_possibles.begin(), min(scored_possibles.size(), (size_t)125)); ++i)
+            word_.setString(sentences_.begin()->second);
+            
+            cout << "current top possibles:\n";
+            for(auto const& sentence : sentences_)
             {
-                possibles_.insert(i->second);
+                cout << sentence.second << " [" << sentence.first << "]" << endl;
             }
-        }
-        
-        //possibles_ = next_possibilities;
-
-        cout << "current top possibles:\n";
-        for(auto const& p : possibles_)
-        {
-            cout << p.second << " [" << p.first << "]" << endl;
         }
     }
     
@@ -217,9 +213,14 @@ private:
     sf::Text& letter_, &word_;
     bool& restart_;
     
-    //detail::trie<char> dictionary_;
-    respacer respacer_;
-    multimap<double, string> possibles_;
+    detail::trie<char> dictionary_;
+    //respacer respacer_;
+    //multimap<double, string> possibles_;
+    //deque<vector<string>> last_three_;
+    //multimap<double, string> current_word_;
+    //vector<multimap<double, string>> correct_words_;
+    multimap<double, string> words_;
+    multimap<double, string> sentences_;
 };
 
 int main()
@@ -234,7 +235,7 @@ int main()
     }
     
     sf::Font font;
-    if (!font.loadFromFile("resources/arial.ttf"))
+    if (!font.loadFromFile("resources/Inconsolata.otf"))
         return EXIT_FAILURE;
 
     sf::Text asl_letter = sf::Text("", font, 30);
@@ -247,7 +248,7 @@ int main()
     
     bool restart = false;
 
-    Listener listener("./aspell_en_expanded", "./romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
+    Listener listener("../aspell_en_expanded", "../romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
     
     Leap::Controller controller;
     controller.addListener(listener);
@@ -311,14 +312,25 @@ int main()
             
             if(event.type == sf::Event::KeyPressed)
             {
-                if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z &&
-                   controller.frame().hands()[0].isValid())
-                {
-                    trainer.capture(string(1, event.key.code + 'A'), controller.frame().hands()[0]);
-                }
-                else if(event.key.code == sf::Keyboard::Space)
+                if(event.key.code == sf::Keyboard::Delete ||
+                   event.key.code == sf::Keyboard::BackSpace)
                 {
                     restart = true;
+                }
+                else if(controller.frame().hands()[0].isValid())
+                {
+                    if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
+                    {
+                        trainer.capture(string(1, event.key.code + 'A'), controller.frame().hands()[0]);
+                    }
+                    else if(event.key.code == sf::Keyboard::Space)
+                    {
+                        trainer.capture(string(1, ' '), controller.frame().hands()[0]);
+                    }
+                    else if(event.key.code == sf::Keyboard::Period)
+                    {
+                        trainer.capture(string(1, '.'), controller.frame().hands()[0]);
+                    }
                 }
             }
         }

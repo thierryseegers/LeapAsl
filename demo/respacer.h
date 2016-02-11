@@ -108,7 +108,7 @@ namespace detail
         {
             invalid = 0x0,
             valid = 0x1,
-            correct = 0x2
+            correct = 0x3
         };
         
         template<typename I>
