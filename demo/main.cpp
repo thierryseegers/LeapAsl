@@ -7,6 +7,7 @@
 #include <LeapSDK/LeapMath.h>
 #include <LeapSDK/util/LeapUtil.h>
 #include <LeapSDK/util/LeapUtilGL.h>
+#include <lm/model.hh>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Window.hpp>
@@ -102,13 +103,13 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
 class Listener : public LearnedGestures::Listener
 {
 public:
-    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& word, bool& restart)
+    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& top_sentence, bool& restart)
         : LearnedGestures::Listener(trainer)
         , letter_(letter)
-        , word_(word)
+        , top_sentence_(top_sentence)
         , restart_(restart)
         , dictionary_(dictionary_path)
-        //, respacer_(dictionary_path, language_model_path)
+        , model_(language_model_path.c_str())
     {}
 
     virtual void onGesture(map<double, string> const& matches) override
@@ -131,16 +132,12 @@ public:
         if(sentences_.empty() ||
            restart_)
         {
-            cout << ">reset" << endl;
+            cout << ">restart" << endl;
             
-            //possibles_.clear();
             sentences_.clear();
             for(int i : indices)
             {
-                //next_possibilities.emplace((i + 1) * top_matches[i].first, string() + (char)::tolower(top_matches[i].second[0]));
-                //possibles_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
-                //current_word_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
-                sentences_.emplace(i + 1, string() + (char)::tolower(top_matches[i].second[0]));
+                sentences_.emplace(combined_score{i + 1., numeric_limits<double>::min()}, make_pair(string() + (char)::tolower(top_matches[i].second[0]), model_.BeginSentenceState()));
             }
             
             restart_ = false;
@@ -149,78 +146,108 @@ public:
         {
             cout << ">next" << endl;
             
-            //double score, lowest_score = numeric_limits<double>::max();
-            //string lowest_scoring_word;
-            //vector<string> lowest_scoring_sentence;
-            //multimap<double, pair<double, string>> scored_possibles;
-            
-            multimap<double, string> sentences;
+            decltype(sentences_) sentences;
             
             for(auto const& sentence : sentences_)
             {
-                auto const last_space_ix = sentence.second.rfind(' ');
-                auto const last_word = (last_space_ix == string::npos ? sentence.second : sentence.second.substr(last_space_ix + 1));
-                
+                auto const last_space_ix = sentence.second.first.rfind(' ');
+                auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
+            
                 for(int i : indices)
                 {
                     char const c = (char)::tolower(top_matches[i].second[0]);
-                    
+
                     if(c == ' ')
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
                             auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
-                            if(validity & detail::trie<char>::correct)
+                            if(validity == detail::trie<char>::correct)
                             {
-                                sentences.emplace(sentence.first + (i + 1) * top_matches[i].first, sentence.second + ' ');
+                                lm::ngram::State const& in_state = model_.BeginSentenceState();
+                                lm::ngram::State out_state;
+                                
+                                auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
+                                
+                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
+                                                   make_pair(sentence.second.first + c, out_state));
                             }
                         }
                     }
                     else if(c == '.')
                     {
-                        auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
-                        if(validity & detail::trie<char>::correct)
+                        if(!last_word.empty())  // Do nothing on double spaces.
                         {
-                            cout << ">sentence: " << sentence.second << endl;
+                            auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
+                            if(validity == detail::trie<char>::correct)
+                            {
+                                lm::ngram::State const& in_state = model_.BeginSentenceState();
+                                lm::ngram::State out_state;
+                                
+                                auto const score = model_.Score(in_state, model_.GetVocabulary().Index("</s>"), out_state);
+                                
+                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
+                                                   make_pair(sentence.second.first + c, out_state));
+                            }
                         }
                     }
                     else
                     {
-                        auto const next_word = last_word + c;
+                        auto const word = last_word + c;
                         
-                        auto const validity = dictionary_.validate(next_word.begin(), next_word.end());
+                        auto const validity = dictionary_.validate(word.begin(), word.end());
                         if(validity & detail::trie<char>::valid)
                         {
-                            sentences.emplace(sentence.first + (i + 1) * top_matches[i].first, sentence.second + c);
+                            combined_score const score = {sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score};
+                            auto const p = make_pair(score, make_pair(sentence.second.first + c, sentence.second.second));
+                            sentences.insert(p);
+/*
+                            sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score},
+                                               make_pair(sentence.second.first + c, sentence.second.second));
+ */
+
                         }
                     }
                 }
             }
 
-            swap(sentences_, sentences);
-            
-            word_.setString(sentences_.begin()->second);
-            
-            cout << "current top possibles:\n";
-            for(auto const& sentence : sentences_)
+            // Keep the top N results.
+            if(sentences.size() > 50)
             {
-                cout << sentence.second << " [" << sentence.first << "]" << endl;
+                sentences.erase(next(sentences.begin(), 50));
             }
+            swap(sentences, sentences_);
+
+            auto const& top_sentence = *sentences_.begin();
+            cout << "[{" << top_sentence.first.gesture_score << ", " << top_sentence.first.language_model_score
+                << "}, \"" << top_sentence.second.first << "\"]" << endl;
+            
+            top_sentence_.setString(top_sentence.second.first);
+ 
         }
     }
-    
+
 private:
-    sf::Text& letter_, &word_;
+    sf::Text& letter_, &top_sentence_;
     bool& restart_;
     
     detail::trie<char> dictionary_;
-    //respacer respacer_;
-    //multimap<double, string> possibles_;
-    //deque<vector<string>> last_three_;
-    //multimap<double, string> current_word_;
-    //vector<multimap<double, string>> correct_words_;
-    multimap<double, string> words_;
-    multimap<double, string> sentences_;
+    lm::ngram::Model model_;
+
+public:
+    struct combined_score
+    {
+        double gesture_score, language_model_score;
+        
+        bool operator<(combined_score const& other) const
+        {
+            return gesture_score * language_model_score < other.gesture_score * other.language_model_score;
+        }
+    };
+    
+private:
+    using sentences_t = multimap<combined_score, pair<string, lm::ngram::State>>;
+    sentences_t sentences_;
 };
 
 int main()
