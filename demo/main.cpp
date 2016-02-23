@@ -198,14 +198,8 @@ public:
                         auto const validity = dictionary_.validate(word.begin(), word.end());
                         if(validity & detail::trie<char>::valid)
                         {
-                            combined_score const score = {sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score};
-                            auto const p = make_pair(score, make_pair(sentence.second.first + c, sentence.second.second));
-                            sentences.insert(p);
-/*
-                            sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score},
-                                               make_pair(sentence.second.first + c, sentence.second.second));
- */
-
+                            auto const score = combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score};
+                            sentences.emplace(score, make_pair(sentence.second.first + c, sentence.second.second));
                         }
                     }
                 }
