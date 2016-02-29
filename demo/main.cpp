@@ -137,9 +137,10 @@ public:
             sentences_.clear();
             for(int i : indices)
             {
-                sentences_.emplace(combined_score{i + 1., numeric_limits<double>::min()}, make_pair(string() + (char)::tolower(top_matches[i].second[0]), model_.BeginSentenceState()));
+                sentences_.emplace(combined_score{i + 1., 0.}, make_pair(string() + (char)::tolower(top_matches[i].second[0]), model_.BeginSentenceState()));
             }
             
+            top_sentence_.setString("");
             restart_ = false;
         }
         else
@@ -170,7 +171,7 @@ public:
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
-                                                   make_pair(sentence.second.first + c, out_state));
+                                                  make_pair(sentence.second.first + c, out_state));
                             }
                         }
                     }
@@ -187,7 +188,7 @@ public:
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index("</s>"), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
-                                                   make_pair(sentence.second.first + c, out_state));
+                                                  make_pair(sentence.second.first + c, out_state));
                             }
                         }
                     }
@@ -198,8 +199,8 @@ public:
                         auto const validity = dictionary_.validate(word.begin(), word.end());
                         if(validity & detail::trie<char>::valid)
                         {
-                            auto const score = combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score};
-                            sentences.emplace(score, make_pair(sentence.second.first + c, sentence.second.second));
+                            sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score},
+                                              make_pair(sentence.second.first + c, sentence.second.second));
                         }
                     }
                 }
@@ -235,7 +236,26 @@ public:
         
         bool operator<(combined_score const& other) const
         {
-            return gesture_score * language_model_score < other.gesture_score * other.language_model_score;
+            if(language_model_score == 0. && other.language_model_score == 0.)
+            {
+                return gesture_score < other.language_model_score;
+            }
+            else if(language_model_score == 0.)
+            {
+                return false;
+            }
+            else if(other.language_model_score == 0.)
+            {
+                return true;
+            }
+            else if((language_model_score - other.language_model_score) < numeric_limits<double>::epsilon())
+            {
+                return gesture_score < other.gesture_score;
+            }
+            else
+            {
+                return language_model_score < other.language_model_score;
+            }
         }
     };
     
