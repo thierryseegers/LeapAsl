@@ -13,7 +13,7 @@
 namespace LearnedGestures { namespace detail
 {
 
-class Poses
+class Gestures
 {
 public:
     // Add a pose to the set of known poses. (Overwrites if an existing name is given.)
@@ -29,10 +29,10 @@ public:
     Leap::Hand hand(std::string const& name) const;
     
 private:
-    friend std::ostream& operator<<(std::ostream&, Poses const&);
-    friend std::istream& operator>>(std::istream&, Poses&);
+    friend std::ostream& operator<<(std::ostream&, Gestures const&);
+    friend std::istream& operator>>(std::istream&, Gestures&);
     
-    std::map<std::string, std::pair<Leap::Frame, fingers_position>> poses_;
+    std::map<std::string, std::pair<Leap::Frame, fingers_position>> gestures_;
 };
 
 }}

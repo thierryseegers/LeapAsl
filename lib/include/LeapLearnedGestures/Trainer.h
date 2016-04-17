@@ -2,7 +2,7 @@
 
 #include "Utility.h"
 
-#include "detail/Poses.h"
+#include "detail/Gestures.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -27,7 +27,7 @@ private:
     friend std::ostream& operator<<(std::ostream&, Trainer const&);
     friend std::istream& operator>>(std::istream&, Trainer&);
     
-    detail::Poses poses_;
+    detail::Gestures gestures_;
 };
 
 }

@@ -1,4 +1,4 @@
-#include "LeapLearnedGestures/detail/Poses.h"
+#include "LeapLearnedGestures/detail/Gestures.h"
 
 #include "LeapLearnedGestures/Utility.h"
 
@@ -15,56 +15,54 @@ namespace LearnedGestures { namespace detail
 
 using namespace std;
 
-void Poses::capture(string const& name, Leap::Frame const& frame)
+void Gestures::capture(string const& name, Leap::Frame const& frame)
 {
-    auto const p = to_position(frame.hands()[0]);
-    
-    poses_[name] = make_pair(frame, to_position(frame.hands()[0]));
+    gestures_[name] = make_pair(frame, to_position(frame.hands()[0]));
 }
 
-string Poses::match(Leap::Hand const& hand) const
+string Gestures::match(Leap::Hand const& hand) const
 {
     auto const positions = to_position(hand);
     
     double delta_cap = numeric_limits<double>::max(), delta;
     string name;
     
-    for(auto const& pose : poses_)
+    for(auto const& gesture : gestures_)
     {
-        if((delta = difference(pose.second.second, positions, delta_cap)) < delta_cap)
+        if((delta = difference(gesture.second.second, positions, delta_cap)) < delta_cap)
         {
             delta_cap = delta;
-            name = pose.first;
+            name = gesture.first;
         }
     }
     
     return name;
 }
 
-multimap<double, string> Poses::compare(Leap::Hand const& hand) const
+multimap<double, string> Gestures::compare(Leap::Hand const& hand) const
 {
     multimap<double, string> scores;
     
     auto const normalized = to_position(hand);
     
-    for(auto const& pose : poses_)
+    for(auto const& gesture : gestures_)
     {
-        scores.emplace(difference(pose.second.second, normalized), pose.first);
+        scores.emplace(difference(gesture.second.second, normalized), gesture.first);
     }
     
     return scores;
 }
 
-Leap::Hand Poses::hand(string const& name) const
+Leap::Hand Gestures::hand(string const& name) const
 {
-    return poses_.at(name).first.hands()[0];
+    return gestures_.at(name).first.hands()[0];
 }
 
-ostream& operator<<(ostream& o, Poses const& g)
+ostream& operator<<(ostream& o, Gestures const& g)
 {
-    o << g.poses_.size() << endl;
+    o << g.gestures_.size() << endl;
     
-    for(auto const& gesture : g.poses_)
+    for(auto const& gesture : g.gestures_)
     {
         o << gesture.first << endl;
         
@@ -84,11 +82,11 @@ ostream& operator<<(ostream& o, Poses const& g)
     return o;
 }
 
-istream& operator>>(istream& i, Poses& g)
+istream& operator>>(istream& i, Gestures& g)
 {
     Leap::Controller controller;
     
-    g.poses_.clear();
+    g.gestures_.clear();
     
     size_t gesture_count;
     i >> gesture_count;
@@ -99,7 +97,7 @@ istream& operator>>(istream& i, Poses& g)
     {
         getline(i, name);
         
-        auto& data = g.poses_[name];
+        auto& data = g.gestures_[name];
         
         for(auto& finger : data.second)
         {
