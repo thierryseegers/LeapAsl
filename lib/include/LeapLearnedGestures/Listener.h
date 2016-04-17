@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Trainer.h"
-
-#include "detail/Poses.h"
 #include "Utility.h"
+
+#include "detail/Gestures.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -33,7 +33,7 @@ private:
     fingers_position anchor_;
     std::map<std::string, double> scores_;
     
-    detail::Poses poses_;
+    detail::Gestures gestures_;
 };
     
 }

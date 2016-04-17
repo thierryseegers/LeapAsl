@@ -1,7 +1,7 @@
 #include "LeapLearnedGestures/Listener.h"
 
 #include "LeapLearnedGestures/Trainer.h"
-#include "LeapLearnedGestures/detail/Poses.h"
+#include "LeapLearnedGestures/detail/Gestures.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -21,7 +21,7 @@ Listener::Listener(Trainer const& trainer, duration const& hold_duration, durati
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
     , next_sample_(chrono::high_resolution_clock::now())
-    , poses_(trainer.poses_)
+    , gestures_(trainer.gestures_)
 {}
 
 void Listener::onGesture(map<double, string> const& matches)
@@ -78,7 +78,7 @@ void Listener::onFrame(Leap::Controller const& controller)
     
     // Analyze the one hand present.
 
-    auto const scores = poses_.compare(hand);
+    auto const scores = gestures_.compare(hand);
     for(auto const& score : scores)
     {
         scores_[score.second] += score.first;

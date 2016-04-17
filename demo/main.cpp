@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -114,13 +115,15 @@ public:
 
     virtual void onGesture(map<double, string> const& matches) override
     {
-        static auto const indices = {0, 1, 2, 3, 4};
-        static stringstream ss;
-
-        array<pair<double, string>, 5> top_matches;
-        copy_n(matches.begin(), 5, top_matches.begin());
+        size_t const n_top_matches = min((size_t)5, matches.size());
         
-        ss.str("");
+        vector<pair<double, string>> top_matches;
+        copy_n(matches.begin(), n_top_matches, back_inserter(top_matches));
+        
+        vector<size_t> indices(n_top_matches);
+        iota(indices.begin(), indices.end(), 0);
+
+        stringstream ss;
         for(auto const& top_match : top_matches)
         {
             ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
@@ -287,6 +290,12 @@ int main()
     asl_word.setColor(sf::Color(255, 255, 255, 170));
     asl_word.setPosition(400.f, 400.f);
     
+    sf::Text replay_character = sf::Text("", font, 50);
+    replay_character.setColor(sf::Color(255, 255, 255, 170));
+    replay_character.setPosition(600.f, 170.f);
+    
+    Leap::Hand replay_hand;
+    
     bool restart = false;
 
     Listener listener("../aspell_en_expanded", "../romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
@@ -301,7 +310,7 @@ int main()
     contextSettings.antialiasingLevel = 4;
     
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapGesturesEx Demo", sf::Style::Default, contextSettings);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Demo", sf::Style::Default, contextSettings);
     window.setVerticalSyncEnabled(true);
 
     // Make the window the active target for OpenGL calls
@@ -358,19 +367,32 @@ int main()
                 {
                     restart = true;
                 }
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ||
+                        sf::Keyboard::isKeyPressed(sf::Keyboard::RShift))
+                {
+                    if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
+                    {
+                        if(replay_character.getString().isEmpty() ||
+                           char(event.key.code + 'A' != replay_character.getString()[0]))
+                        {
+                            replay_character.setString(char(event.key.code + 'A'));
+                            replay_hand = trainer.hand(replay_character.getString());
+                        }
+                    }
+                }
                 else if(controller.frame().hands()[0].isValid())
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        trainer.capture(string(1, event.key.code + 'A'), controller.frame().hands()[0]);
+                        trainer.capture(string(1, event.key.code + 'A'), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        trainer.capture(string(1, ' '), controller.frame().hands()[0]);
+                        trainer.capture(string(1, ' '), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        trainer.capture(string(1, '.'), controller.frame().hands()[0]);
+                        trainer.capture(string(1, '.'), controller.frame());
                     }
                 }
             }
@@ -380,36 +402,62 @@ int main()
         
         window.pushGLStates();
         {
-            auto const& hand = controller.frame().hands()[0];
-            
-            if(hand.isValid())
-            {
-                // Draw the hand with its original rotation and scale but offset to the left a tad.
-                auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition() + Leap::Vector{-200, 0, 0}};
-                drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
-
-                // Draw the hand normalized.
-                auto const normalized = LearnedGestures::normalized_hand_transform(hand);
-                drawTransformedSkeletonHand(hand, normalized, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
-            }
-            
             // Draw the last recognized letter.
             window.draw(asl_letter);
             
             // Draw the current best word.
             window.draw(asl_word);
+            
+            // Draw the replay character.
+            if(replay_character.getString() != "" && replay_hand.isValid())
+            {
+                window.draw(replay_character);
+            }
         }
         window.popGLStates();
+        
+        auto const& hand = controller.frame().hands()[0];
+        
+        if(hand.isValid())
+        {
+            // Draw the hand with its original rotation and scale but offset to the left a tad.
+            auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition() + Leap::Vector{-200, 0, 0}};
+            drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
+
+            // Draw the hand normalized.
+            auto const normalized = LearnedGestures::normalized_hand_transform(hand);
+            drawTransformedSkeletonHand(hand, normalized, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
+        }
+        
+        // Draw the replay hand.
+        if(replay_character.getString() != "" && replay_hand.isValid())
+        {
+            auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
+            auto const normalized = LearnedGestures::normalized_hand_transform(replay_hand);
+            
+            drawTransformedSkeletonHand(replay_hand, offset * normalized, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
+        }
 
         // Finally, display the rendered frame on screen
         window.display();
     }
     
-    ofstream gestures_data_ostream("gestures", ios::binary);
-    if(gestures_data_ostream)
+    try
     {
-        gestures_data_ostream << trainer;
+        string const temp_filename = tmpnam(nullptr);
+        
+        ofstream gestures_data_ostream(temp_filename.c_str(), ios::binary);
+        if(gestures_data_ostream)
+        {
+            gestures_data_ostream << trainer;
+        }
+        
+        rename(temp_filename.c_str(), "gestures");
     }
-    
+    catch(exception const& e)
+    {
+        cout << "Failed to write gestures to disk" << endl << e.what() << endl;
+    }
+
     return 0;
 }
