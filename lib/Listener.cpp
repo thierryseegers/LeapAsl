@@ -1,6 +1,5 @@
 #include "LeapLearnedGestures/Listener.h"
 
-#include "LeapLearnedGestures/Trainer.h"
 #include "LeapLearnedGestures/detail/Gestures.h"
 
 #include <LeapSDK/Leap.h>
@@ -16,12 +15,12 @@ namespace LearnedGestures
 
 using namespace std;
     
-Listener::Listener(Trainer const& trainer, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+Listener::Listener(detail::Gestures const& gestures, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
     : hold_duration_(hold_duration)
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
     , next_sample_(chrono::high_resolution_clock::now())
-    , gestures_(trainer.gestures_)
+    , gestures_(gestures)
 {}
 
 void Listener::onGesture(map<double, string> const& matches)

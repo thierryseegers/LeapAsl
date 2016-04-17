@@ -105,7 +105,7 @@ class Listener : public LearnedGestures::Listener
 {
 public:
     Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& top_sentence, bool& restart)
-        : LearnedGestures::Listener(trainer)
+        : LearnedGestures::Listener(trainer.gestures())
         , letter_(letter)
         , top_sentence_(top_sentence)
         , restart_(restart)

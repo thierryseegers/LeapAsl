@@ -15,6 +15,11 @@ void Trainer::capture(string const& name, Leap::Frame const& frame)
     gestures_.capture(name, frame);
 }
 
+detail::Gestures Trainer::gestures() const
+{
+    return gestures_;
+}
+
 Leap::Hand Trainer::hand(string const& name) const
 {
     return gestures_.hand(name);
