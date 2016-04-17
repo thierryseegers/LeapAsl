@@ -2,7 +2,7 @@
 
 #include "Utility.h"
 
-#include "detail/Gestures.h"
+#include "Trainer.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -19,7 +19,7 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
     
-    Listener(detail::Gestures const& gestures, duration const& hold_duration = std::chrono::milliseconds(1500), duration const& down_duration = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100));
+    Listener(Trainer const& trainer, duration const& hold_duration = std::chrono::milliseconds(1500), duration const& down_duration = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100));
     
     virtual void onGesture(std::map<double, std::string> const& matches);
     
@@ -32,7 +32,7 @@ private:
     fingers_position anchor_;
     std::map<std::string, double> scores_;
     
-    detail::Gestures gestures_;
+    Trainer const& trainer_;
 };
     
 }
