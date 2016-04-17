@@ -31,6 +31,8 @@ private:
     friend std::ostream& operator<<(std::ostream&, Trainer const&);
     friend std::istream& operator>>(std::istream&, Trainer&);
     
+    std::mutex mutable m_;
+    
     std::map<std::string, std::pair<Leap::Frame, fingers_position>> gestures_;
 };
 
