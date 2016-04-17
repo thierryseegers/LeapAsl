@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utility.h"
+
 #include "detail/Poses.h"
 
 #include <LeapSDK/Leap.h>
@@ -15,7 +17,9 @@ class Listener;
 class Trainer
 {
 public:
-    void capture(std::string const& name, Leap::Hand const& hand);
+    void capture(std::string const& name, Leap::Frame const& frame);
+    
+    Leap::Hand hand(std::string const& name) const;
     
 private:
     friend Listener;

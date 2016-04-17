@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Trainer.h"
+#include "Utility.h"
 
 #include "detail/Poses.h"
-#include "Utility.h"
 
 #include <LeapSDK/Leap.h>
 

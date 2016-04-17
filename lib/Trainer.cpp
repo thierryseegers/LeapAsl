@@ -10,11 +10,16 @@ namespace LearnedGestures
 
 using namespace std;
     
-void Trainer::capture(string const& name, Leap::Hand const& hand)
+void Trainer::capture(string const& name, Leap::Frame const& frame)
 {
-    poses_.capture(name, hand);
+    poses_.capture(name, frame);
 }
-    
+
+Leap::Hand Trainer::hand(string const& name) const
+{
+    return poses_.hand(name);
+}
+
 ostream& operator<<(ostream& o, LearnedGestures::Trainer const& t)
 {
     return o << t.poses_;
