@@ -76,12 +76,9 @@ ostream& operator<<(ostream& o, Poses const& g)
             }
         }
         
-        ofstream frame_stream(gesture.first + ".frame.data");
-        auto const s = gesture.second.first.serialize();
-        
-        frame_stream << s;
-        
-        o << endl;
+        auto const serialized_frame = gesture.second.first.serialize();
+
+        o << serialized_frame.length() << endl << serialized_frame << endl;
     }
     
     return o;
@@ -93,12 +90,12 @@ istream& operator>>(istream& i, Poses& g)
     
     g.poses_.clear();
     
-    size_t size;
-    i >> size;
+    size_t gesture_count;
+    i >> gesture_count;
     i.ignore();
     
     string name;
-    for(size_t j = 0; j != size; ++j)
+    for(size_t j = 0; j != gesture_count; ++j)
     {
         getline(i, name);
         
@@ -111,30 +108,17 @@ istream& operator>>(istream& i, Poses& g)
                 i >> joint.x >> joint.y >> joint.z;
             }
         }
-        /*
+        
         string::size_type serialized_length;
         i >> serialized_length;
         i.ignore();
         
-        /*
         string serialized_frame(serialized_length, '\0');
         i.read(&*serialized_frame.begin(), serialized_length);
         
         data.first.deserialize(serialized_frame);
         
-        auto b = data.first.isValid();
-        */
-
-        ifstream frame_stream(name + ".frame.data");
-        string const serialized_frame{istreambuf_iterator<char>(frame_stream), istreambuf_iterator<char>()};
-
-        auto const l = serialized_frame.length();
-        
-        data.first.deserialize(serialized_frame);
-        
-        auto const p = to_position(data.first.hands()[0]);
-        
-        i >> ws;
+        i.ignore();
     }
     
     return i;
