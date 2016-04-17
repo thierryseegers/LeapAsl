@@ -8,7 +8,6 @@
 
 #include <atomic>
 #include <iosfwd>
-#include <mutex>
 #include <string>
 
 namespace LearnedGestures
