@@ -66,11 +66,11 @@ Leap::Hand Trainer::hand(string const& name) const
 
 ostream& operator<<(ostream& o, Trainer const& t)
 {
-    o << t.gestures_.size() << endl;
+    o << t.gestures_.size() << '\n';
     
     for(auto const& gesture : t.gestures_)
     {
-        o << gesture.first << endl;
+        o << gesture.first << '\n';
         
         for(auto const& finger : gesture.second.second)
         {
@@ -82,7 +82,7 @@ ostream& operator<<(ostream& o, Trainer const& t)
         
         auto const serialized_frame = gesture.second.first.serialize();
         
-        o << serialized_frame.length() << endl << serialized_frame << endl;
+        o << serialized_frame.length() << '\n' << serialized_frame << '\n';
     }
     
     return o;
@@ -114,15 +114,12 @@ istream& operator>>(istream& i, Trainer& t)
         }
         
         string::size_type serialized_length;
-        i >> serialized_length;
-        i.ignore();
+        i >> serialized_length >> ws;
         
         string serialized_frame(serialized_length, '\0');
-        i.read(&*serialized_frame.begin(), serialized_length);
+        i.read(&*serialized_frame.begin(), serialized_length) >> ws;
         
         data.first.deserialize(serialized_frame);
-        
-        i.ignore();
     }
     
     return i;
