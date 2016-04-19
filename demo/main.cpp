@@ -298,7 +298,7 @@ int main()
     
     bool restart = false;
 
-    Listener listener("../aspell_en_expanded", "../romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
+    Listener listener("aspell_en_expanded", "romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
     
     Leap::Controller controller;
     controller.addListener(listener);

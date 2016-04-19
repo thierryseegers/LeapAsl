@@ -45,11 +45,8 @@ if(APPLE)
         "-framework OpenGL")
 endif()
 
-file(COPY
-        ${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded
-        ${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet.mmap
-    DESTINATION
-        ${CMAKE_CURRENT_BINARY_DIR})
-
 add_custom_command(TARGET demo POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:demo>/resources)
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded" $<TARGET_FILE_DIR:demo>
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet.mmap" $<TARGET_FILE_DIR:demo>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:demo>/resources
+)
