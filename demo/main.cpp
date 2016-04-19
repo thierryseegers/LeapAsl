@@ -174,7 +174,7 @@ public:
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
-                                                  make_pair(sentence.second.first + c, out_state));
+                                                  make_pair(sentence.second.first + '_', out_state));
                             }
                         }
                     }
