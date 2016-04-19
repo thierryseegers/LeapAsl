@@ -232,7 +232,6 @@ private:
     detail::trie<char> dictionary_;
     lm::ngram::Model model_;
 
-public:
     struct combined_score
     {
         double gesture_score, language_model_score;
@@ -241,7 +240,7 @@ public:
         {
             if(language_model_score == 0. && other.language_model_score == 0.)
             {
-                return gesture_score < other.language_model_score;
+                return gesture_score < other.gesture_score;
             }
             else if(language_model_score == 0.)
             {
@@ -262,7 +261,6 @@ public:
         }
     };
     
-private:
     using sentences_t = multimap<combined_score, pair<string, lm::ngram::State>>;
     sentences_t sentences_;
 };
