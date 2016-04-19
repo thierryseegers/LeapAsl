@@ -238,7 +238,7 @@ private:
         
         bool operator<(combined_score const& other) const
         {
-            if(language_model_score == 0. && other.language_model_score == 0.)
+            if((language_model_score - other.language_model_score) < numeric_limits<double>::epsilon())
             {
                 return gesture_score < other.gesture_score;
             }
@@ -249,10 +249,6 @@ private:
             else if(other.language_model_score == 0.)
             {
                 return true;
-            }
-            else if((language_model_score - other.language_model_score) < numeric_limits<double>::epsilon())
-            {
-                return gesture_score < other.gesture_score;
             }
             else
             {
