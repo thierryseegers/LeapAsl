@@ -391,9 +391,9 @@ int main()
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
                         if(replay_character.getString().isEmpty() ||
-                           char(event.key.code + 'A' != replay_character.getString()[0]))
+                           char(event.key.code + 'a' != replay_character.getString()[0]))
                         {
-                            replay_character.setString(char(event.key.code + 'A'));
+                            replay_character.setString(char(event.key.code + 'a'));
                             replay_hand = trainer.hand(replay_character.getString());
                         }
                     }
