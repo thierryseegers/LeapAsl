@@ -168,7 +168,7 @@ public:
                             auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
                             if(validity == detail::trie<char>::correct)
                             {
-                                lm::ngram::State const& in_state = model_.BeginSentenceState();
+                                lm::ngram::State const& in_state = sentence.second.second;
                                 lm::ngram::State out_state;
                                 
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
@@ -185,7 +185,7 @@ public:
                             auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
                             if(validity == detail::trie<char>::correct)
                             {
-                                lm::ngram::State const& in_state = model_.BeginSentenceState();
+                                lm::ngram::State const& in_state = sentence.second.second;
                                 lm::ngram::State out_state;
                                 
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index("</s>"), out_state);
