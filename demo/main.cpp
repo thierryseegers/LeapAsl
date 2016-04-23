@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <list>
 #include <map>
 #include <memory>
 #include <numeric>
@@ -144,6 +145,7 @@ public:
             }
             
             top_sentence_.setString("");
+            dropped_char_indices_.clear();
             restart_ = false;
         }
         else
@@ -209,14 +211,27 @@ public:
                 }
             }
 
-            // Keep the top N results.
-            if(sentences.size() > 50)
+            if(sentences.size() == 0)
             {
-                sentences.erase(next(sentences.begin(), 50));
+                // This means none of the top matches lead to valid words. Record this spot as a dropped character.
+                dropped_char_indices_.push_front(sentences_.begin()->second.first.size());
             }
-            swap(sentences, sentences_);
+            else
+            {
+                // Keep the top N results.
+                if(sentences.size() > 50)
+                {
+                    sentences.erase(next(sentences.begin(), 50));
+                }
+                swap(sentences, sentences_);
+            }
 
-            auto const& top_sentence = *sentences_.begin();
+            auto top_sentence = *sentences_.begin();
+            for(auto const i : dropped_char_indices_)
+            {
+                top_sentence.second.first.insert(i, 1, Listener::dropped_character);
+            }
+            
             cout << "[{" << top_sentence.first.gesture_score << ", " << top_sentence.first.language_model_score
                 << "}, \"" << top_sentence.second.first << "\"]" << endl;
             
@@ -226,6 +241,8 @@ public:
     }
 
 private:
+    static char const dropped_character = '?';
+    
     sf::Text& letter_, &top_sentence_;
     bool& restart_;
     
@@ -259,6 +276,8 @@ private:
     
     using sentences_t = multimap<combined_score, pair<string, lm::ngram::State>>;
     sentences_t sentences_;
+    
+    list<string::size_type> dropped_char_indices_;
 };
 
 int main()
