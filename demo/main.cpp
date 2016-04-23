@@ -141,12 +141,12 @@ public:
             sentences_.clear();
             for(int i : indices)
             {
-                sentences_.emplace(combined_score{i + 1., 0.}, make_pair(string() + (char)::tolower(top_matches[i].second[0]), model_.BeginSentenceState()));
+                sentences_.emplace(combined_score{i + 1., 0.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
             }
             
             dropped_char_indices_.clear();
             
-            top_sentence_.setString((char)::tolower(top_matches[0].second[0]));
+            top_sentence_.setString(top_matches[0].second);
             restart_ = false;
         }
         else
@@ -157,14 +157,14 @@ public:
             
             for(auto const& sentence : sentences_)
             {
-                auto const last_space_ix = sentence.second.first.rfind(Listener::space_character);
+                auto const last_space_ix = sentence.second.first.rfind(Listener::space_symbol);
                 auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
             
                 for(int i : indices)
                 {
-                    char const c = (char)::tolower(top_matches[i].second[0]);
+                    string const s = top_matches[i].second;
 
-                    if(c == Listener::space_character)
+                    if(s == Listener::space_symbol)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -177,11 +177,11 @@ public:
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
-                                                  make_pair(sentence.second.first + Listener::space_character, out_state));
+                                                  make_pair(sentence.second.first + Listener::space_symbol, out_state));
                             }
                         }
                     }
-                    else if(c == '.')
+                    else if(s == Listener::period_symbol)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -194,19 +194,19 @@ public:
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index("</s>"), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
-                                                  make_pair(sentence.second.first + c, out_state));
+                                                  make_pair(sentence.second.first + s, out_state));
                             }
                         }
                     }
                     else
                     {
-                        auto const word = last_word + c;
+                        auto const word = last_word + s;
                         
                         auto const validity = dictionary_.validate(word.begin(), word.end());
                         if(validity & detail::trie<char>::valid)
                         {
                             sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score},
-                                              make_pair(sentence.second.first + c, sentence.second.second));
+                                              make_pair(sentence.second.first + s, sentence.second.second));
                         }
                     }
                 }
@@ -230,7 +230,7 @@ public:
             auto top_sentence = *sentences_.begin();
             for(auto const i : dropped_char_indices_)
             {
-                top_sentence.second.first.insert(i, 1, Listener::dropped_character);
+                top_sentence.second.first.insert(i, Listener::dropped_symbol);
             }
             
             cout << "[{" << top_sentence.first.gesture_score << ", " << top_sentence.first.language_model_score
@@ -241,10 +241,10 @@ public:
         }
     }
 
-    static char const space_character = '_';
+    static string const space_symbol, period_symbol;
     
 private:
-    static char const dropped_character = '?';
+    static string const dropped_symbol;
     
     sf::Text& letter_, &top_sentence_;
     bool& restart_;
@@ -282,6 +282,8 @@ private:
     
     list<string::size_type> dropped_char_indices_;
 };
+
+string const Listener::space_symbol = "_", Listener::period_symbol = ".", Listener::dropped_symbol = "?";
 
 int main()
 {
@@ -400,15 +402,15 @@ int main()
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        trainer.capture(string(1, event.key.code + 'A'), controller.frame());
+                        trainer.capture(string(1, event.key.code + 'a'), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        trainer.capture(string(1, Listener::space_character), controller.frame());
+                        trainer.capture(Listener::space_symbol, controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        trainer.capture(string(1, '.'), controller.frame());
+                        trainer.capture(Listener::period_symbol, controller.frame());
                     }
                 }
             }
