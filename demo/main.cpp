@@ -144,8 +144,9 @@ public:
                 sentences_.emplace(combined_score{i + 1., 0.}, make_pair(string() + (char)::tolower(top_matches[i].second[0]), model_.BeginSentenceState()));
             }
             
-            top_sentence_.setString("");
             dropped_char_indices_.clear();
+            
+            top_sentence_.setString((char)::tolower(top_matches[0].second[0]));
             restart_ = false;
         }
         else
@@ -156,14 +157,14 @@ public:
             
             for(auto const& sentence : sentences_)
             {
-                auto const last_space_ix = sentence.second.first.rfind(' ');
+                auto const last_space_ix = sentence.second.first.rfind(Listener::space_character);
                 auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
             
                 for(int i : indices)
                 {
                     char const c = (char)::tolower(top_matches[i].second[0]);
 
-                    if(c == ' ')
+                    if(c == Listener::space_character)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -176,7 +177,7 @@ public:
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
-                                                  make_pair(sentence.second.first + '_', out_state));
+                                                  make_pair(sentence.second.first + Listener::space_character, out_state));
                             }
                         }
                     }
@@ -240,6 +241,8 @@ public:
         }
     }
 
+    static char const space_character = '_';
+    
 private:
     static char const dropped_character = '?';
     
@@ -401,7 +404,7 @@ int main()
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        trainer.capture(string(1, ' '), controller.frame());
+                        trainer.capture(string(1, Listener::space_character), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
@@ -445,6 +448,7 @@ int main()
         // Draw the replay hand.
         if(replay_character.getString() != "" && replay_hand.isValid())
         {
+            // Draw the replay hand normalized and offset to the right a tad.
             auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
             auto const normalized = LearnedGestures::normalized_hand_transform(replay_hand);
             
