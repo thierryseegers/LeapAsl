@@ -179,7 +179,7 @@ public:
                                 
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
                                 
-                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
+                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score + score},
                                                   make_pair(sentence.second.first + Listener::space_symbol, out_state));
                             }
                         }
@@ -196,7 +196,7 @@ public:
                                 
                                 auto const score = model_.Score(in_state, model_.GetVocabulary().Index("</s>"), out_state);
                                 
-                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, score},
+                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score + score},
                                                   make_pair(sentence.second.first + s, out_state));
                             }
                         }
