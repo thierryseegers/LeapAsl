@@ -24,7 +24,7 @@ public:
     virtual void onGesture(std::map<double, std::string> const& matches);
     
 private:
-    void onFrame(Leap::Controller const& controller);
+    virtual void onFrame(Leap::Controller const& controller) override;
     
     duration const hold_duration_, down_duration_, sample_rate_;
     time_point anchor_sample_, next_sample_;
