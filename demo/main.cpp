@@ -141,12 +141,15 @@ public:
             sentences_.clear();
             for(int i : indices)
             {
-                sentences_.emplace(combined_score{i + 1., 0.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
+                if(top_matches[i].second != Listener::space_symbol)
+                {
+                    sentences_.emplace(combined_score{i + 1., 0.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
+                }
             }
             
             dropped_char_indices_.clear();
             
-            top_sentence_.setString(top_matches[0].second);
+            top_sentence_.setString(sentences_.begin()->second.first);
             restart_ = false;
         }
         else
