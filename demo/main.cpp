@@ -1,7 +1,6 @@
 #include "respacer.h"
 
 #include "LeapLearnedGestures/LearnedGestures.h"
-#include "LeapLearnedGestures/Utility.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
@@ -13,17 +12,14 @@
 #include <SFML/Window.hpp>
 
 #include <algorithm>
-#include <array>
 #include <atomic>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <list>
 #include <map>
 #include <memory>
 #include <numeric>
-#include <queue>
 #include <string>
 #include <vector>
 
