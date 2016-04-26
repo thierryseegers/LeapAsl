@@ -261,15 +261,16 @@ private:
     {
         double complete_words, incomplete_word, gesture;
         
+        // Still not working right, apparently. Try moving it out as a global.
         bool operator<(combined_score const& other) const
         {
-            if((complete_words + incomplete_word) - (other.complete_words + other.incomplete_word) < numeric_limits<double>::epsilon())
+            if(abs((complete_words + incomplete_word) - (other.complete_words + other.incomplete_word)) < numeric_limits<double>::epsilon())
             {
                 return gesture < other.gesture;
             }
             else
             {
-                return complete_words + incomplete_word > other.complete_words + other.incomplete_word;
+                return (complete_words + incomplete_word) > (other.complete_words + other.incomplete_word);
             }
         }
     };
