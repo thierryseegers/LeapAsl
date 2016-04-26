@@ -143,7 +143,10 @@ public:
             {
                 if(top_matches[i].second != Listener::space_symbol)
                 {
-                    sentences_.emplace(combined_score{i + 1., 0.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
+                    lm::ngram::State out_state;
+                    auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
+
+                    sentences_.emplace(combined_score{0, score, i + 1.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
                 }
             }
             
@@ -174,12 +177,10 @@ public:
                             auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
                             if(validity == detail::trie<char>::correct)
                             {
-                                lm::ngram::State const& in_state = sentence.second.second;
                                 lm::ngram::State out_state;
+                                auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
                                 
-                                auto const score = model_.Score(in_state, model_.GetVocabulary().Index(last_word), out_state);
-                                
-                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score + score},
+                                sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
                                                   make_pair(sentence.second.first + Listener::space_symbol, out_state));
                             }
                         }
@@ -191,12 +192,10 @@ public:
                             auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
                             if(validity == detail::trie<char>::correct)
                             {
-                                lm::ngram::State const& in_state = sentence.second.second;
                                 lm::ngram::State out_state;
+                                auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index("</s>"), out_state);
                                 
-                                auto const score = model_.Score(in_state, model_.GetVocabulary().Index("</s>"), out_state);
-                                
-                                sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score + score},
+                                sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
                                                   make_pair(sentence.second.first + s, out_state));
                             }
                         }
@@ -208,7 +207,10 @@ public:
                         auto const validity = dictionary_.validate(word.begin(), word.end());
                         if(validity & detail::trie<char>::valid)
                         {
-                            sentences.emplace(combined_score{sentence.first.gesture_score + (i + 1) * top_matches[i].first, sentence.first.language_model_score},
+                            lm::ngram::State out_state;
+                            auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(word), out_state);
+
+                            sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
                                               make_pair(sentence.second.first + s, sentence.second.second));
                         }
                     }
@@ -257,25 +259,17 @@ private:
 
     struct combined_score
     {
-        double gesture_score, language_model_score;
+        double complete_words, incomplete_word, gesture;
         
         bool operator<(combined_score const& other) const
         {
-            if((language_model_score - other.language_model_score) < numeric_limits<double>::epsilon())
+            if((complete_words + incomplete_word) - (other.complete_words + other.incomplete_word) < numeric_limits<double>::epsilon())
             {
-                return gesture_score < other.gesture_score;
-            }
-            else if(language_model_score == 0.)
-            {
-                return false;
-            }
-            else if(other.language_model_score == 0.)
-            {
-                return true;
+                return gesture < other.gesture;
             }
             else
             {
-                return language_model_score < other.language_model_score;
+                return complete_words + incomplete_word > other.complete_words + other.incomplete_word;
             }
         }
     };
