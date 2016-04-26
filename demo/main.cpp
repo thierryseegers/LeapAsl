@@ -225,9 +225,9 @@ public:
             else
             {
                 // Keep the top N results.
-                if(sentences.size() > 50)
+                if(sentences.size() > 100)
                 {
-                    sentences.erase(next(sentences.begin(), 50), sentences.end());
+                    sentences.erase(next(sentences.begin(), 100), sentences.end());
                 }
                 swap(sentences, sentences_);
             }
