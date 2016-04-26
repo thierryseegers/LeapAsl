@@ -1,6 +1,6 @@
 #include "LeapLearnedGestures/Listener.h"
 
-#include "LeapLearnedGestures/Trainer.h"
+#include "LeapLearnedGestures/Database.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -15,12 +15,12 @@ namespace LearnedGestures
 
 using namespace std;
     
-Listener::Listener(Trainer const& trainer, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+Listener::Listener(Database const& database, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
     : hold_duration_(hold_duration)
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
     , next_sample_(chrono::high_resolution_clock::now())
-    , trainer_(trainer)
+    , database_(database)
 {}
 
 void Listener::onGesture(map<double, string> const& matches)
@@ -77,7 +77,7 @@ void Listener::onFrame(Leap::Controller const& controller)
     
     // Analyze the one hand present.
 
-    auto const scores = trainer_.compare(hand);
+    auto const scores = database_.compare(hand);
     for(auto const& score : scores)
     {
         scores_[score.second] += score.first;

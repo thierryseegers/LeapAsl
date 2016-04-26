@@ -105,8 +105,8 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
 class Listener : public LearnedGestures::Listener
 {
 public:
-    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& top_sentence, bool& restart)
-        : LearnedGestures::Listener(trainer)
+    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
+        : LearnedGestures::Listener(database)
         , letter_(letter)
         , top_sentence_(top_sentence)
         , restart_(restart)
@@ -261,7 +261,6 @@ private:
     {
         double complete_words, incomplete_word, gesture;
         
-        // Still not working right, apparently. Try moving it out as a global.
         bool operator<(combined_score const& other) const
         {
             if(abs((complete_words + incomplete_word) - (other.complete_words + other.incomplete_word)) < numeric_limits<double>::epsilon())
@@ -285,12 +284,12 @@ string const Listener::space_symbol = "_", Listener::period_symbol = ".", Listen
 
 int main()
 {
-    LearnedGestures::Trainer trainer;
+    LearnedGestures::Database database;
     {
         ifstream gestures_data_istream("gestures", ios::binary);
         if(gestures_data_istream)
         {
-            gestures_data_istream >> trainer;
+            gestures_data_istream >> database;
         }
     }
     
@@ -314,7 +313,7 @@ int main()
     
     bool restart = false;
 
-    Listener listener("aspell_en_expanded", "romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
+    Listener listener("aspell_en_expanded", "romeo_and_juliet.mmap", database, asl_letter, asl_word, restart);
     
     Leap::Controller controller;
     controller.addListener(listener);
@@ -392,7 +391,7 @@ int main()
                            char(event.key.code + 'a' != replay_character.getString()[0]))
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = trainer.hand(replay_character.getString());
+                            replay_hand = database.hand(replay_character.getString());
                         }
                     }
                 }
@@ -400,15 +399,15 @@ int main()
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        trainer.capture(string(1, event.key.code + 'a'), controller.frame());
+                        database.capture(string(1, event.key.code + 'a'), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        trainer.capture(Listener::space_symbol, controller.frame());
+                        database.capture(Listener::space_symbol, controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        trainer.capture(Listener::period_symbol, controller.frame());
+                        database.capture(Listener::period_symbol, controller.frame());
                     }
                 }
             }
@@ -466,7 +465,7 @@ int main()
         ofstream gestures_data_ostream(temp_filename.c_str(), ios::binary);
         if(gestures_data_ostream)
         {
-            gestures_data_ostream << trainer;
+            gestures_data_ostream << database;
         }
         
         rename(temp_filename.c_str(), "gestures");
