@@ -102,10 +102,10 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
-class Listener : public LearnedGestures::Recognizer
+class Analyzer : public LearnedGestures::Recognizer
 {
 public:
-    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
+    Analyzer(string const& dictionary_path, string const& language_model_path, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
         : LearnedGestures::Recognizer(database)
         , letter_(letter)
         , top_sentence_(top_sentence)
@@ -141,7 +141,7 @@ public:
             sentences_.clear();
             for(int i : indices)
             {
-                if(top_matches[i].second != Listener::space_symbol)
+                if(top_matches[i].second != Analyzer::space_symbol)
                 {
                     lm::ngram::State out_state;
                     auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
@@ -163,14 +163,14 @@ public:
             
             for(auto const& sentence : sentences_)
             {
-                auto const last_space_ix = sentence.second.first.rfind(Listener::space_symbol);
+                auto const last_space_ix = sentence.second.first.rfind(Analyzer::space_symbol);
                 auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
             
                 for(int i : indices)
                 {
                     string const s = top_matches[i].second;
 
-                    if(s == Listener::space_symbol)
+                    if(s == Analyzer::space_symbol)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -181,11 +181,11 @@ public:
                                 auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                                  make_pair(sentence.second.first + Listener::space_symbol, out_state));
+                                                  make_pair(sentence.second.first + Analyzer::space_symbol, out_state));
                             }
                         }
                     }
-                    else if(s == Listener::period_symbol)
+                    else if(s == Analyzer::period_symbol)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -235,11 +235,18 @@ public:
             auto top_sentence = *sentences_.begin();
             for(auto const i : dropped_char_indices_)
             {
-                top_sentence.second.first.insert(i, Listener::dropped_symbol);
+                top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
             }
             
+            /*
             cout << "[{" << top_sentence.first.gesture_score << ", " << top_sentence.first.language_model_score
                 << "}, \"" << top_sentence.second.first << "\"]" << endl;
+            */
+            for(auto const sentence : sentences_)
+            {
+                cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
+                    << "}, \"" << sentence.second.first << "\"]" << endl;
+            }
             
             top_sentence_.setString(top_sentence.second.first);
  
@@ -280,7 +287,7 @@ private:
     list<string::size_type> dropped_char_indices_;
 };
 
-string const Listener::space_symbol = "_", Listener::period_symbol = ".", Listener::dropped_symbol = "?";
+string const Analyzer::space_symbol = "_", Analyzer::period_symbol = ".", Analyzer::dropped_symbol = "?";
 
 int main()
 {
@@ -313,10 +320,10 @@ int main()
     
     bool restart = false;
 
-    Listener listener("aspell_en_expanded", "romeo_and_juliet.mmap", database, asl_letter, asl_word, restart);
+    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", database, asl_letter, asl_word, restart);
     
     Leap::Controller controller;
-    controller.addListener(listener);
+    controller.addListener(analyzer);
     
     // Request a 32-bits depth buffer when creating the window
     sf::ContextSettings contextSettings;
@@ -403,11 +410,11 @@ int main()
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        database.capture(Listener::space_symbol, controller.frame());
+                        database.capture(Analyzer::space_symbol, controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        database.capture(Listener::period_symbol, controller.frame());
+                        database.capture(Analyzer::period_symbol, controller.frame());
                     }
                 }
             }
