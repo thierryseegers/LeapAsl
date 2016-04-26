@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -105,16 +106,21 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
 class Analyzer
 {
 public:
-    Analyzer(string const& dictionary_path, string const& language_model_path, Leap::Controller& controller, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
-        : recognizer_(controller, database, bind(&Analyzer::onGesture, this, placeholders::_1))
-        , letter_(letter)
-        , top_sentence_(top_sentence)
-        , restart_(restart)
-        , dictionary_(dictionary_path)
+    using on_gesture_f = function<void (vector<pair<double, string>> const&, string const&)>;
+    
+    Analyzer(string const& dictionary_path, string const& language_model_path, on_gesture_f&& on_gesture)
+        : dictionary_(dictionary_path)
         , model_(language_model_path.c_str())
+        , on_gesture_(on_gesture)
+        , restart_(false)
     {}
 
-    void onGesture(map<double, string> const& matches)
+    void restart()
+    {
+        restart_ = true;
+    }
+    
+    void on_gesture(map<double, string> const& matches)
     {
         size_t const n_top_matches = min((size_t)5, matches.size());
         
@@ -123,18 +129,9 @@ public:
         
         vector<size_t> indices(n_top_matches);
         iota(indices.begin(), indices.end(), 0);
-
-        stringstream ss;
-        for(auto const& top_match : top_matches)
-        {
-            ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
-        }
-
-        letter_.setString(ss.str());
-        
         
         if(sentences_.empty() ||
-           restart_)
+           restart_.exchange(false))
         {
             cout << ">restart" << endl;
             
@@ -151,9 +148,6 @@ public:
             }
             
             dropped_char_indices_.clear();
-            
-            top_sentence_.setString(sentences_.begin()->second.first);
-            restart_ = false;
         }
         else
         {
@@ -231,26 +225,21 @@ public:
                 }
                 swap(sentences, sentences_);
             }
-
-            auto top_sentence = *sentences_.begin();
-            for(auto const i : dropped_char_indices_)
-            {
-                top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
-            }
-            
-            /*
-            cout << "[{" << top_sentence.first.gesture_score << ", " << top_sentence.first.language_model_score
-                << "}, \"" << top_sentence.second.first << "\"]" << endl;
-            */
-            for(auto const sentence : sentences_)
-            {
-                cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
-                    << "}, \"" << sentence.second.first << "\"]" << endl;
-            }
-            
-            top_sentence_.setString(top_sentence.second.first);
- 
         }
+        
+        auto top_sentence = *sentences_.begin();
+        for(auto const i : dropped_char_indices_)
+        {
+            top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
+        }
+            
+        for(auto const sentence : sentences_)
+        {
+            cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
+                << "}, \"" << sentence.second.first << "\"]" << endl;
+        }
+        
+        on_gesture_(top_matches, top_sentence.second.first);
     }
 
     static string const space_symbol, period_symbol;
@@ -258,14 +247,12 @@ public:
 private:
     static string const dropped_symbol;
     
-    LearnedGestures::Recognizer recognizer_;
-    
-    sf::Text& letter_, &top_sentence_;
-    bool& restart_;
-    
     detail::trie<char> dictionary_;
     lm::ngram::Model model_;
-
+    on_gesture_f on_gesture_;
+    
+    atomic<bool> restart_;
+    
     struct combined_score
     {
         double complete_words, incomplete_word, gesture;
@@ -293,37 +280,54 @@ string const Analyzer::space_symbol = "_", Analyzer::period_symbol = ".", Analyz
 
 int main()
 {
-    LearnedGestures::Database database;
+    sf::Font font;
+    if(!font.loadFromFile("resources/Inconsolata.otf"))
     {
-        ifstream gestures_data_istream("gestures", ios::binary);
-        if(gestures_data_istream)
-        {
-            gestures_data_istream >> database;
-        }
+        return EXIT_FAILURE;
     }
     
-    sf::Font font;
-    if (!font.loadFromFile("resources/Inconsolata.otf"))
-        return EXIT_FAILURE;
-
     sf::Text asl_letter = sf::Text("", font, 30);
     asl_letter.setColor(sf::Color(255, 255, 255, 170));
     asl_letter.setPosition(20.f, 400.f);
     
-    sf::Text asl_word = sf::Text("", font, 30);
-    asl_word.setColor(sf::Color(255, 255, 255, 170));
-    asl_word.setPosition(400.f, 400.f);
+    sf::Text asl_sentence = sf::Text("", font, 30);
+    asl_sentence.setColor(sf::Color(255, 255, 255, 170));
+    asl_sentence.setPosition(400.f, 400.f);
     
     sf::Text replay_character = sf::Text("", font, 50);
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    Leap::Hand replay_hand;
+    auto const on_gesture = [&asl_letter, &asl_sentence](vector<pair<double, string>> const& top_matches, string const& top_sentence)
+    {
+        stringstream ss;
+        for(auto const& top_match : top_matches)
+        {
+            ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
+        }
+        
+        asl_letter.setString(ss.str());
+        
+        asl_sentence.setString(top_sentence);
+    };
     
-    bool restart = false;
+    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", on_gesture);
 
+    LearnedGestures::Database database;
+    {
+        ifstream gestures_data_istream("gestures", ios::binary);
+        if(!gestures_data_istream)
+        {
+            return EXIT_FAILURE;
+        }
+        
+        gestures_data_istream >> database;
+    }
+    
     Leap::Controller controller;
-    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", controller, database, asl_letter, asl_word, restart);
+    LearnedGestures::Recognizer recognizer(controller, database, bind(&Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+    
+    Leap::Hand replay_hand;
     
     // Request a 32-bits depth buffer when creating the window
     sf::ContextSettings contextSettings;
@@ -387,7 +391,7 @@ int main()
                 if(event.key.code == sf::Keyboard::Delete ||
                    event.key.code == sf::Keyboard::BackSpace)
                 {
-                    restart = true;
+                    analyzer.restart();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ||
                         sf::Keyboard::isKeyPressed(sf::Keyboard::RShift))
@@ -428,7 +432,7 @@ int main()
             window.draw(asl_letter);
             
             // Draw the current best word.
-            window.draw(asl_word);
+            window.draw(asl_sentence);
             
             // Draw the replay character.
             if(replay_character.getString() != "" && replay_hand.isValid())
