@@ -135,10 +135,12 @@ public:
         {
             cout << ">restart" << endl;
             
+            dropped_char_indices_.clear();
             sentences_.clear();
+
             for(int i : indices)
             {
-                if(top_matches[i].second != Analyzer::space_symbol)
+                if(top_matches[i].second != Analyzer::space_symbol) // Skip whitespace at the begininng of a sentence.
                 {
                     lm::ngram::State out_state;
                     auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
@@ -146,8 +148,6 @@ public:
                     sentences_.emplace(combined_score{0, score, i + 1.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
                 }
             }
-            
-            dropped_char_indices_.clear();
         }
         else
         {
@@ -175,7 +175,7 @@ public:
                                 auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                                  make_pair(sentence.second.first + Analyzer::space_symbol, out_state));
+                                                  make_pair(sentence.second.first + s, out_state));
                             }
                         }
                     }
@@ -326,15 +326,15 @@ int main()
     
     Leap::Controller controller;
     LearnedGestures::Recognizer recognizer(controller, database, bind(&Analyzer::on_gesture, ref(analyzer), placeholders::_1));
-    
+
     Leap::Hand replay_hand;
-    
+
     // Request a 32-bits depth buffer when creating the window
     sf::ContextSettings contextSettings;
     contextSettings.depthBits = 32;
     contextSettings.stencilBits = 8;
     contextSettings.antialiasingLevel = 4;
-    
+
     // Create the main window
     sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Demo", sf::Style::Default, contextSettings);
     window.setVerticalSyncEnabled(true);
@@ -345,28 +345,28 @@ int main()
     // sf::Shader::isAvailable() at least once before calling
     // setActive(), as those functions will cause a context switch
     window.setActive();
-    
+
     // Enable Z-buffer read and write
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glClearDepth(1.f);
-    
+
     // Disable lighting
     glDisable(GL_LIGHTING);
-    
+
     // Configure the viewport (the same size as the window)
     glViewport(0, 0, window.getSize().x, window.getSize().y);
-    
+
     // Setup a perspective projection
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     GLfloat const ratio = static_cast<float>(window.getSize().x) / window.getSize().y;
     glFrustum(-ratio, ratio, -1.f, 1.f, 1.f, 500.f);
-    
+
     // Look here
     gluLookAt(0, 300, 250, 0., 0., 0., 0., 1., 0.);
 
-    
+
     // Start game loop
     while(window.isOpen())
     {
@@ -465,10 +465,11 @@ int main()
             drawTransformedSkeletonHand(replay_hand, offset * normalized, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
         }
 
-        // Finally, display the rendered frame on screen
+        // Finally, display the rendered frame on screen.
         window.display();
     }
     
+    // Save the database to file.
     try
     {
         string const temp_filename = tmpnam(nullptr);
