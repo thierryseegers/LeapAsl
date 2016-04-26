@@ -102,11 +102,11 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
-class Analyzer : public LearnedGestures::Recognizer
+class Analyzer
 {
 public:
-    Analyzer(string const& dictionary_path, string const& language_model_path, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
-        : LearnedGestures::Recognizer(database)
+    Analyzer(string const& dictionary_path, string const& language_model_path, Leap::Controller& controller, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
+        : recognizer_(controller, database, bind(&Analyzer::onGesture, this, placeholders::_1))
         , letter_(letter)
         , top_sentence_(top_sentence)
         , restart_(restart)
@@ -114,7 +114,7 @@ public:
         , model_(language_model_path.c_str())
     {}
 
-    virtual void onGesture(map<double, string> const& matches) override
+    void onGesture(map<double, string> const& matches)
     {
         size_t const n_top_matches = min((size_t)5, matches.size());
         
@@ -258,6 +258,8 @@ public:
 private:
     static string const dropped_symbol;
     
+    LearnedGestures::Recognizer recognizer_;
+    
     sf::Text& letter_, &top_sentence_;
     bool& restart_;
     
@@ -320,10 +322,8 @@ int main()
     
     bool restart = false;
 
-    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", database, asl_letter, asl_word, restart);
-    
     Leap::Controller controller;
-    controller.addListener(analyzer);
+    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", controller, database, asl_letter, asl_word, restart);
     
     // Request a 32-bits depth buffer when creating the window
     sf::ContextSettings contextSettings;

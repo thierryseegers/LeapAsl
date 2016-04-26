@@ -15,17 +15,17 @@ namespace LearnedGestures
 
 using namespace std;
     
-Recognizer::Recognizer(Database const& database, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
-    : hold_duration_(hold_duration)
+Recognizer::Recognizer(Leap::Controller& controller, Database const& database, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+    : database_(database)
+    , on_gesture_(on_gesture)
+    , hold_duration_(hold_duration)
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
     , next_sample_(chrono::high_resolution_clock::now())
-    , database_(database)
-{}
+{
+    controller.addListener(*this);
+}
 
-void Recognizer::onGesture(map<double, string> const& matches)
-{}
-    
 void Recognizer::onFrame(Leap::Controller const& controller)
 {
     auto const now = chrono::high_resolution_clock::now();
@@ -94,7 +94,7 @@ void Recognizer::onFrame(Leap::Controller const& controller)
         {
             matches[score.second / 1000] = score.first;
         }
-        onGesture(matches);
+        on_gesture_(matches);
         
         anchor_ = fingers_position();
         scores_.clear();
