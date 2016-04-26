@@ -1,4 +1,4 @@
-#include "LeapLearnedGestures/Listener.h"
+#include "LeapLearnedGestures/Recognizer.h"
 
 #include "LeapLearnedGestures/Database.h"
 
@@ -15,7 +15,7 @@ namespace LearnedGestures
 
 using namespace std;
     
-Listener::Listener(Database const& database, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+Recognizer::Recognizer(Database const& database, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
     : hold_duration_(hold_duration)
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
@@ -23,10 +23,10 @@ Listener::Listener(Database const& database, duration const& hold_duration, dura
     , database_(database)
 {}
 
-void Listener::onGesture(map<double, string> const& matches)
+void Recognizer::onGesture(map<double, string> const& matches)
 {}
     
-void Listener::onFrame(Leap::Controller const& controller)
+void Recognizer::onFrame(Leap::Controller const& controller)
 {
     auto const now = chrono::high_resolution_clock::now();
     

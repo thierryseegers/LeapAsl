@@ -102,11 +102,11 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
-class Listener : public LearnedGestures::Listener
+class Listener : public LearnedGestures::Recognizer
 {
 public:
     Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Database const& database, sf::Text& letter, sf::Text& top_sentence, bool& restart)
-        : LearnedGestures::Listener(database)
+        : LearnedGestures::Recognizer(database)
         , letter_(letter)
         , top_sentence_(top_sentence)
         , restart_(restart)

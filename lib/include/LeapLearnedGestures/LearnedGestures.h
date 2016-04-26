@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Database.h"
-#include "Listener.h"
+#include "Recognizer.h"
 
 namespace LeapLearnedGestures
 {}

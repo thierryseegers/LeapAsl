@@ -8,13 +8,13 @@ include_directories(
 
 set(headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Databases.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Listener.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/LearnedGestures.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Recognizer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Utility.h)
 
 set(sources
     ${CMAKE_CURRENT_SOURCE_DIR}/Database.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Listener.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp)
 
 add_library(LearnedGestures ${headers} ${sources})
