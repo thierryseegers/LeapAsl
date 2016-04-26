@@ -1,6 +1,6 @@
-#include "LeapLearnedGestures/Listener.h"
+#include "LeapLearnedGestures/Recognizer.h"
 
-#include "LeapLearnedGestures/Trainer.h"
+#include "LeapLearnedGestures/Database.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -15,18 +15,18 @@ namespace LearnedGestures
 
 using namespace std;
     
-Listener::Listener(Trainer const& trainer, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
-    : hold_duration_(hold_duration)
+Recognizer::Recognizer(Leap::Controller& controller, Database const& database, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+    : database_(database)
+    , on_gesture_(on_gesture)
+    , hold_duration_(hold_duration)
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
     , next_sample_(chrono::high_resolution_clock::now())
-    , trainer_(trainer)
-{}
+{
+    controller.addListener(*this);
+}
 
-void Listener::onGesture(map<double, string> const& matches)
-{}
-    
-void Listener::onFrame(Leap::Controller const& controller)
+void Recognizer::onFrame(Leap::Controller const& controller)
 {
     auto const now = chrono::high_resolution_clock::now();
     
@@ -77,7 +77,7 @@ void Listener::onFrame(Leap::Controller const& controller)
     
     // Analyze the one hand present.
 
-    auto const scores = trainer_.compare(hand);
+    auto const scores = database_.compare(hand);
     for(auto const& score : scores)
     {
         scores_[score.second] += score.first;
@@ -94,7 +94,7 @@ void Listener::onFrame(Leap::Controller const& controller)
         {
             matches[score.second / 1000] = score.first;
         }
-        onGesture(matches);
+        on_gesture_(matches);
         
         anchor_ = fingers_position();
         scores_.clear();

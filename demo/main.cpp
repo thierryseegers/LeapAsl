@@ -1,7 +1,6 @@
 #include "respacer.h"
 
 #include "LeapLearnedGestures/LearnedGestures.h"
-#include "LeapLearnedGestures/Utility.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
@@ -13,16 +12,14 @@
 #include <SFML/Window.hpp>
 
 #include <algorithm>
-#include <array>
+#include <atomic>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
-#include <iterator>
 #include <list>
 #include <map>
 #include <memory>
 #include <numeric>
-#include <queue>
 #include <string>
 #include <vector>
 
@@ -102,19 +99,24 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
-class Listener : public LearnedGestures::Listener
+class Analyzer
 {
 public:
-    Listener(string const& dictionary_path, string const& language_model_path, LearnedGestures::Trainer const& trainer, sf::Text& letter, sf::Text& top_sentence, bool& restart)
-        : LearnedGestures::Listener(trainer)
-        , letter_(letter)
-        , top_sentence_(top_sentence)
-        , restart_(restart)
-        , dictionary_(dictionary_path)
+    using on_gesture_f = function<void (vector<pair<double, string>> const&, string const&)>;
+    
+    Analyzer(string const& dictionary_path, string const& language_model_path, on_gesture_f&& on_gesture)
+        : dictionary_(dictionary_path)
         , model_(language_model_path.c_str())
+        , on_gesture_(on_gesture)
+        , restart_(false)
     {}
 
-    virtual void onGesture(map<double, string> const& matches) override
+    void restart()
+    {
+        restart_ = true;
+    }
+    
+    void on_gesture(map<double, string> const& matches)
     {
         size_t const n_top_matches = min((size_t)5, matches.size());
         
@@ -123,25 +125,18 @@ public:
         
         vector<size_t> indices(n_top_matches);
         iota(indices.begin(), indices.end(), 0);
-
-        stringstream ss;
-        for(auto const& top_match : top_matches)
-        {
-            ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
-        }
-
-        letter_.setString(ss.str());
-        
         
         if(sentences_.empty() ||
-           restart_)
+           restart_.exchange(false))
         {
             cout << ">restart" << endl;
             
+            dropped_char_indices_.clear();
             sentences_.clear();
+
             for(int i : indices)
             {
-                if(top_matches[i].second != Listener::space_symbol)
+                if(top_matches[i].second != Analyzer::space_symbol) // Skip whitespace at the begininng of a sentence.
                 {
                     lm::ngram::State out_state;
                     auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
@@ -149,11 +144,6 @@ public:
                     sentences_.emplace(combined_score{0, score, i + 1.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
                 }
             }
-            
-            dropped_char_indices_.clear();
-            
-            top_sentence_.setString(sentences_.begin()->second.first);
-            restart_ = false;
         }
         else
         {
@@ -163,14 +153,14 @@ public:
             
             for(auto const& sentence : sentences_)
             {
-                auto const last_space_ix = sentence.second.first.rfind(Listener::space_symbol);
+                auto const last_space_ix = sentence.second.first.rfind(Analyzer::space_symbol);
                 auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
             
                 for(int i : indices)
                 {
                     string const s = top_matches[i].second;
 
-                    if(s == Listener::space_symbol)
+                    if(s == Analyzer::space_symbol)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -181,11 +171,11 @@ public:
                                 auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
                                 
                                 sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                                  make_pair(sentence.second.first + Listener::space_symbol, out_state));
+                                                  make_pair(sentence.second.first + s, out_state));
                             }
                         }
                     }
-                    else if(s == Listener::period_symbol)
+                    else if(s == Analyzer::period_symbol)
                     {
                         if(!last_word.empty())  // Do nothing on double spaces.
                         {
@@ -231,19 +221,21 @@ public:
                 }
                 swap(sentences, sentences_);
             }
-
-            auto top_sentence = *sentences_.begin();
-            for(auto const i : dropped_char_indices_)
-            {
-                top_sentence.second.first.insert(i, Listener::dropped_symbol);
-            }
-            
-            cout << "[{" << top_sentence.first.gesture_score << ", " << top_sentence.first.language_model_score
-                << "}, \"" << top_sentence.second.first << "\"]" << endl;
-            
-            top_sentence_.setString(top_sentence.second.first);
- 
         }
+        
+        auto top_sentence = *sentences_.begin();
+        for(auto const i : dropped_char_indices_)
+        {
+            top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
+        }
+            
+        for(auto const sentence : sentences_)
+        {
+            cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
+                << "}, \"" << sentence.second.first << "\"]" << endl;
+        }
+        
+        on_gesture_(top_matches, top_sentence.second.first);
     }
 
     static string const space_symbol, period_symbol;
@@ -251,17 +243,16 @@ public:
 private:
     static string const dropped_symbol;
     
-    sf::Text& letter_, &top_sentence_;
-    bool& restart_;
-    
     detail::trie<char> dictionary_;
     lm::ngram::Model model_;
-
+    on_gesture_f on_gesture_;
+    
+    atomic<bool> restart_;
+    
     struct combined_score
     {
         double complete_words, incomplete_word, gesture;
         
-        // Still not working right, apparently. Try moving it out as a global.
         bool operator<(combined_score const& other) const
         {
             if(abs((complete_words + incomplete_word) - (other.complete_words + other.incomplete_word)) < numeric_limits<double>::epsilon())
@@ -281,50 +272,65 @@ private:
     list<string::size_type> dropped_char_indices_;
 };
 
-string const Listener::space_symbol = "_", Listener::period_symbol = ".", Listener::dropped_symbol = "?";
+string const Analyzer::space_symbol = "_", Analyzer::period_symbol = ".", Analyzer::dropped_symbol = "?";
 
 int main()
 {
-    LearnedGestures::Trainer trainer;
+    sf::Font font;
+    if(!font.loadFromFile("resources/Inconsolata.otf"))
     {
-        ifstream gestures_data_istream("gestures", ios::binary);
-        if(gestures_data_istream)
-        {
-            gestures_data_istream >> trainer;
-        }
+        return EXIT_FAILURE;
     }
     
-    sf::Font font;
-    if (!font.loadFromFile("resources/Inconsolata.otf"))
-        return EXIT_FAILURE;
-
     sf::Text asl_letter = sf::Text("", font, 30);
     asl_letter.setColor(sf::Color(255, 255, 255, 170));
     asl_letter.setPosition(20.f, 400.f);
     
-    sf::Text asl_word = sf::Text("", font, 30);
-    asl_word.setColor(sf::Color(255, 255, 255, 170));
-    asl_word.setPosition(400.f, 400.f);
+    sf::Text asl_sentence = sf::Text("", font, 30);
+    asl_sentence.setColor(sf::Color(255, 255, 255, 170));
+    asl_sentence.setPosition(400.f, 400.f);
     
     sf::Text replay_character = sf::Text("", font, 50);
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    Leap::Hand replay_hand;
+    auto const on_gesture = [&asl_letter, &asl_sentence](vector<pair<double, string>> const& top_matches, string const& top_sentence)
+    {
+        stringstream ss;
+        for(auto const& top_match : top_matches)
+        {
+            ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
+        }
+        
+        asl_letter.setString(ss.str());
+        
+        asl_sentence.setString(top_sentence);
+    };
     
-    bool restart = false;
+    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", on_gesture);
 
-    Listener listener("aspell_en_expanded", "romeo_and_juliet.mmap", trainer, asl_letter, asl_word, restart);
+    LearnedGestures::Database database;
+    {
+        ifstream gestures_data_istream("gestures", ios::binary);
+        if(!gestures_data_istream)
+        {
+            return EXIT_FAILURE;
+        }
+        
+        gestures_data_istream >> database;
+    }
     
     Leap::Controller controller;
-    controller.addListener(listener);
-    
+    LearnedGestures::Recognizer recognizer(controller, database, bind(&Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+
+    Leap::Hand replay_hand;
+
     // Request a 32-bits depth buffer when creating the window
     sf::ContextSettings contextSettings;
     contextSettings.depthBits = 32;
     contextSettings.stencilBits = 8;
     contextSettings.antialiasingLevel = 4;
-    
+
     // Create the main window
     sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Demo", sf::Style::Default, contextSettings);
     window.setVerticalSyncEnabled(true);
@@ -335,28 +341,28 @@ int main()
     // sf::Shader::isAvailable() at least once before calling
     // setActive(), as those functions will cause a context switch
     window.setActive();
-    
+
     // Enable Z-buffer read and write
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glClearDepth(1.f);
-    
+
     // Disable lighting
     glDisable(GL_LIGHTING);
-    
+
     // Configure the viewport (the same size as the window)
     glViewport(0, 0, window.getSize().x, window.getSize().y);
-    
+
     // Setup a perspective projection
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     GLfloat const ratio = static_cast<float>(window.getSize().x) / window.getSize().y;
     glFrustum(-ratio, ratio, -1.f, 1.f, 1.f, 500.f);
-    
+
     // Look here
     gluLookAt(0, 300, 250, 0., 0., 0., 0., 1., 0.);
 
-    
+
     // Start game loop
     while(window.isOpen())
     {
@@ -381,7 +387,7 @@ int main()
                 if(event.key.code == sf::Keyboard::Delete ||
                    event.key.code == sf::Keyboard::BackSpace)
                 {
-                    restart = true;
+                    analyzer.restart();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ||
                         sf::Keyboard::isKeyPressed(sf::Keyboard::RShift))
@@ -392,7 +398,7 @@ int main()
                            char(event.key.code + 'a' != replay_character.getString()[0]))
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = trainer.hand(replay_character.getString());
+                            replay_hand = database.hand(replay_character.getString());
                         }
                     }
                 }
@@ -400,15 +406,15 @@ int main()
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        trainer.capture(string(1, event.key.code + 'a'), controller.frame());
+                        database.capture(string(1, event.key.code + 'a'), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        trainer.capture(Listener::space_symbol, controller.frame());
+                        database.capture(Analyzer::space_symbol, controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        trainer.capture(Listener::period_symbol, controller.frame());
+                        database.capture(Analyzer::period_symbol, controller.frame());
                     }
                 }
             }
@@ -422,7 +428,7 @@ int main()
             window.draw(asl_letter);
             
             // Draw the current best word.
-            window.draw(asl_word);
+            window.draw(asl_sentence);
             
             // Draw the replay character.
             if(replay_character.getString() != "" && replay_hand.isValid())
@@ -455,10 +461,11 @@ int main()
             drawTransformedSkeletonHand(replay_hand, offset * normalized, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
         }
 
-        // Finally, display the rendered frame on screen
+        // Finally, display the rendered frame on screen.
         window.display();
     }
     
+    // Save the database to file.
     try
     {
         string const temp_filename = tmpnam(nullptr);
@@ -466,7 +473,7 @@ int main()
         ofstream gestures_data_ostream(temp_filename.c_str(), ios::binary);
         if(gestures_data_ostream)
         {
-            gestures_data_ostream << trainer;
+            gestures_data_ostream << database;
         }
         
         rename(temp_filename.c_str(), "gestures");

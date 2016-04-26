@@ -1,4 +1,4 @@
-#include "include/LeapLearnedGestures/Trainer.h"
+#include "include/LeapLearnedGestures/Database.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -11,14 +11,14 @@ namespace LearnedGestures
 
 using namespace std;
 
-void Trainer::capture(string const& name, Leap::Frame const& frame)
+void Database::capture(string const& name, Leap::Frame const& frame)
 {
     lock_guard<mutex> l(m_);
     
     gestures_[name] = make_pair(frame, to_position(frame.hands()[0]));
 }
 
-string Trainer::match(Leap::Hand const& hand) const
+string Database::match(Leap::Hand const& hand) const
 {
     auto const positions = to_position(hand);
     
@@ -40,7 +40,7 @@ string Trainer::match(Leap::Hand const& hand) const
     return name;
 }
 
-multimap<double, string> Trainer::compare(Leap::Hand const& hand) const
+multimap<double, string> Database::compare(Leap::Hand const& hand) const
 {
     multimap<double, string> scores;
     
@@ -57,14 +57,14 @@ multimap<double, string> Trainer::compare(Leap::Hand const& hand) const
     return scores;
 }
 
-Leap::Hand Trainer::hand(string const& name) const
+Leap::Hand Database::hand(string const& name) const
 {
     lock_guard<mutex> l(m_);
     
     return gestures_.at(name).first.hands()[0];
 }
 
-ostream& operator<<(ostream& o, Trainer const& t)
+ostream& operator<<(ostream& o, Database const& t)
 {
     o << t.gestures_.size() << '\n';
     
@@ -88,7 +88,7 @@ ostream& operator<<(ostream& o, Trainer const& t)
     return o;
 }
 
-istream& operator>>(istream& i, Trainer& t)
+istream& operator>>(istream& i, Database& t)
 {
     Leap::Controller controller;
     

@@ -12,7 +12,7 @@
 namespace LearnedGestures
 {
 
-class Trainer
+class Database
 {
 public:
     // Add a pose to the set of known poses. (Overwrites if an existing name is given.)
@@ -28,8 +28,8 @@ public:
     Leap::Hand hand(std::string const& name) const;
     
 private:
-    friend std::ostream& operator<<(std::ostream&, Trainer const&);
-    friend std::istream& operator>>(std::istream&, Trainer&);
+    friend std::ostream& operator<<(std::ostream&, Database const&);
+    friend std::istream& operator>>(std::istream&, Database&);
     
     std::mutex mutable m_;
     
