@@ -392,8 +392,8 @@ int main()
                 {
                     analyzer.reset();
                 }
-                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ||
-                        sf::Keyboard::isKeyPressed(sf::Keyboard::RShift))
+                else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) ||
+                        sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt))
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
