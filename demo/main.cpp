@@ -307,7 +307,7 @@ int main()
         asl_sentence.setString(top_sentence);
     };
     
-    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet.mmap", on_gesture);
+    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
     LearnedGestures::Database database;
     {
