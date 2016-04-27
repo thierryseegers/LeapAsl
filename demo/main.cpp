@@ -108,16 +108,17 @@ public:
         : dictionary_(dictionary_path)
         , model_(language_model_path.c_str())
         , on_gesture_(on_gesture)
-        , restart_(false)
+        , reset_(false)
     {}
 
-    void restart()
+    void reset()
     {
-        restart_ = true;
+        reset_ = true;
     }
     
     void on_gesture(map<double, string> const& matches)
     {
+        // Keep the top N matches and give ourselves a vector of indices.
         size_t const n_top_matches = min((size_t)5, matches.size());
         
         vector<pair<double, string>> top_matches;
@@ -126,14 +127,18 @@ public:
         vector<size_t> indices(n_top_matches);
         iota(indices.begin(), indices.end(), 0);
         
-        if(sentences_.empty() ||
-           restart_.exchange(false))
+        // Clear progress.
+        if(reset_.exchange(false))
         {
-            cout << ">restart" << endl;
+            cout << "reset\n";
             
             dropped_char_indices_.clear();
             sentences_.clear();
-
+        }
+        
+        // Update sentences.
+        if(sentences_.empty())
+        {
             for(int i : indices)
             {
                 if(top_matches[i].second != Analyzer::space_symbol) // Skip whitespace at the begininng of a sentence.
@@ -147,8 +152,6 @@ public:
         }
         else
         {
-            cout << ">next" << endl;
-            
             decltype(sentences_) sentences;
             
             for(auto const& sentence : sentences_)
@@ -247,7 +250,7 @@ private:
     lm::ngram::Model model_;
     on_gesture_f on_gesture_;
     
-    atomic<bool> restart_;
+    atomic<bool> reset_;
     
     struct combined_score
     {
@@ -387,7 +390,7 @@ int main()
                 if(event.key.code == sf::Keyboard::Delete ||
                    event.key.code == sf::Keyboard::BackSpace)
                 {
-                    analyzer.restart();
+                    analyzer.reset();
                 }
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LShift) ||
                         sf::Keyboard::isKeyPressed(sf::Keyboard::RShift))
