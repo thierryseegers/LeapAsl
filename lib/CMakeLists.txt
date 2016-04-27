@@ -7,7 +7,7 @@ include_directories(
     ${Leap_INCLUDE_DIR}/LeapSDK)
 
 set(headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Databases.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Database.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/LearnedGestures.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Recognizer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Utility.h)
