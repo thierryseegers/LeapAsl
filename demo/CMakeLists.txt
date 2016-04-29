@@ -16,7 +16,6 @@ include_directories(
 add_executable(demo
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtil.cpp
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
-    respacer.h
     main.cpp)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")

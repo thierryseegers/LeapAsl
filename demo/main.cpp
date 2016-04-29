@@ -1,5 +1,3 @@
-#include "respacer.h"
-
 #include "LeapLearnedGestures/LearnedGestures.h"
 
 #include <LeapSDK/Leap.h>
