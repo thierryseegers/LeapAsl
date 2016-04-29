@@ -30,7 +30,7 @@ set_target_properties(demo PROPERTIES
     CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(demo
-    LearnedGestures
+    LeapLearnedGestures
     ${Boost_LIBRARIES}
     ${BZIP2_LIBRARIES}
     ${KenLM_LIBRARIES}

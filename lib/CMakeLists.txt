@@ -21,4 +21,4 @@ set(sources
     ${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp)
 
-add_library(LearnedGestures ${headers} ${sources})
+add_library(LeapLearnedGestures ${headers} ${sources})
