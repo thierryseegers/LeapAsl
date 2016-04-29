@@ -89,10 +89,10 @@ void Recognizer::onFrame(Leap::Controller const& controller)
     if(now - anchor_sample_ >= hold_duration_)
     {
         // Order gesture names by their scores.
-        map<double, string> matches;
+        multimap<double, string> matches;
         for(auto const& score : scores_)
         {
-            matches[score.second / 1000] = score.first;
+            matches.emplace(score.second / 1000, score.first);
         }
         on_gesture_(matches);
         

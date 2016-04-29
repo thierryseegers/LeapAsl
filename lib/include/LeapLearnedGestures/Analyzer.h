@@ -133,7 +133,7 @@ public:
     
     void reset();
     
-    void on_gesture(std::map<double, std::string> const& matches);
+    void on_gesture(std::multimap<double, std::string> const& matches);
     
     static std::string const space_symbol, period_symbol;
     

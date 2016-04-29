@@ -28,8 +28,8 @@ void Analyzer::reset()
 {
     reset_ = true;
 }
-    
-void Analyzer::on_gesture(map<double, string> const& matches)
+
+void Analyzer::on_gesture(multimap<double, string> const& matches)
 {
     // Keep the top N matches and give ourselves a vector of indices.
     size_t const n_top_matches = min((size_t)5, matches.size());

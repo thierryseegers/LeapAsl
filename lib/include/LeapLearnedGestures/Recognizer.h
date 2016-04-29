@@ -17,7 +17,7 @@ namespace LearnedGestures
 class Recognizer : public Leap::Listener
 {
 public:
-    using on_gesture_f = std::function<void (std::map<double, std::string> const&)>;
+    using on_gesture_f = std::function<void (std::multimap<double, std::string> const&)>;
     
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
