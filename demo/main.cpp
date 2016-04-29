@@ -6,7 +6,6 @@
 #include <LeapSDK/LeapMath.h>
 #include <LeapSDK/util/LeapUtil.h>
 #include <LeapSDK/util/LeapUtilGL.h>
-#include <lm/model.hh>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Window.hpp>
@@ -99,184 +98,6 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
 }
 
-class Analyzer
-{
-public:
-    using on_gesture_f = function<void (vector<pair<double, string>> const&, string const&)>;
-    
-    Analyzer(string const& dictionary_path, string const& language_model_path, on_gesture_f&& on_gesture)
-        : dictionary_(dictionary_path)
-        , model_(language_model_path.c_str())
-        , on_gesture_(on_gesture)
-        , reset_(false)
-    {}
-
-    void reset()
-    {
-        reset_ = true;
-    }
-    
-    void on_gesture(map<double, string> const& matches)
-    {
-        // Keep the top N matches and give ourselves a vector of indices.
-        size_t const n_top_matches = min((size_t)5, matches.size());
-        
-        vector<pair<double, string>> top_matches;
-        copy_n(matches.begin(), n_top_matches, back_inserter(top_matches));
-        
-        vector<size_t> indices(n_top_matches);
-        iota(indices.begin(), indices.end(), 0);
-        
-        // Clear progress.
-        if(reset_.exchange(false))
-        {
-            cout << "reset\n";
-            
-            dropped_char_indices_.clear();
-            sentences_.clear();
-        }
-        
-        // Update sentences.
-        if(sentences_.empty())
-        {
-            for(int i : indices)
-            {
-                if(top_matches[i].second != Analyzer::space_symbol) // Skip whitespace at the begininng of a sentence.
-                {
-                    lm::ngram::State out_state;
-                    auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
-
-                    sentences_.emplace(combined_score{0, score, i + 1.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
-                }
-            }
-        }
-        else
-        {
-            decltype(sentences_) sentences;
-            
-            for(auto const& sentence : sentences_)
-            {
-                auto const last_space_ix = sentence.second.first.rfind(Analyzer::space_symbol);
-                auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
-            
-                for(int i : indices)
-                {
-                    string const s = top_matches[i].second;
-
-                    if(s == Analyzer::space_symbol)
-                    {
-                        if(!last_word.empty())  // Do nothing on double spaces.
-                        {
-                            auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
-                            if(validity == detail::trie<char>::correct)
-                            {
-                                lm::ngram::State out_state;
-                                auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
-                                
-                                sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                                  make_pair(sentence.second.first + s, out_state));
-                            }
-                        }
-                    }
-                    else if(s == Analyzer::period_symbol)
-                    {
-                        if(!last_word.empty())  // Do nothing on double spaces.
-                        {
-                            auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
-                            if(validity == detail::trie<char>::correct)
-                            {
-                                lm::ngram::State out_state;
-                                auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index("</s>"), out_state);
-                                
-                                sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                                  make_pair(sentence.second.first + s, out_state));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        auto const word = last_word + s;
-                        
-                        auto const validity = dictionary_.validate(word.begin(), word.end());
-                        if(validity & detail::trie<char>::valid)
-                        {
-                            lm::ngram::State out_state;
-                            auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(word), out_state);
-
-                            sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                              make_pair(sentence.second.first + s, sentence.second.second));
-                        }
-                    }
-                }
-            }
-
-            if(sentences.size() == 0)
-            {
-                // This means none of the top matches lead to valid words. Record this spot as a dropped character.
-                dropped_char_indices_.push_front(sentences_.begin()->second.first.size());
-            }
-            else
-            {
-                // Keep the top N results.
-                if(sentences.size() > 100)
-                {
-                    sentences.erase(next(sentences.begin(), 100), sentences.end());
-                }
-                swap(sentences, sentences_);
-            }
-        }
-        
-        auto top_sentence = *sentences_.begin();
-        for(auto const i : dropped_char_indices_)
-        {
-            top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
-        }
-            
-        for(auto const sentence : sentences_)
-        {
-            cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
-                << "}, \"" << sentence.second.first << "\"]" << endl;
-        }
-        
-        on_gesture_(top_matches, top_sentence.second.first);
-    }
-
-    static string const space_symbol, period_symbol;
-    
-private:
-    static string const dropped_symbol;
-    
-    detail::trie<char> dictionary_;
-    lm::ngram::Model model_;
-    on_gesture_f on_gesture_;
-    
-    atomic<bool> reset_;
-    
-    struct combined_score
-    {
-        double complete_words, incomplete_word, gesture;
-        
-        bool operator<(combined_score const& other) const
-        {
-            if(abs((complete_words + incomplete_word) - (other.complete_words + other.incomplete_word)) < numeric_limits<double>::epsilon())
-            {
-                return gesture < other.gesture;
-            }
-            else
-            {
-                return (complete_words + incomplete_word) > (other.complete_words + other.incomplete_word);
-            }
-        }
-    };
-    
-    using sentences_t = multimap<combined_score, pair<string, lm::ngram::State>>;
-    sentences_t sentences_;
-    
-    list<string::size_type> dropped_char_indices_;
-};
-
-string const Analyzer::space_symbol = "_", Analyzer::period_symbol = ".", Analyzer::dropped_symbol = "?";
-
 int main()
 {
     sf::Font font;
@@ -310,7 +131,7 @@ int main()
         asl_sentence.setString(top_sentence);
     };
     
-    Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
+    LearnedGestures::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
     LearnedGestures::Database database;
     {
@@ -324,7 +145,7 @@ int main()
     }
     
     Leap::Controller controller;
-    LearnedGestures::Recognizer recognizer(controller, database, bind(&Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+    LearnedGestures::Recognizer recognizer(controller, database, bind(&LearnedGestures::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
 
     Leap::Hand replay_hand;
 
@@ -413,11 +234,11 @@ int main()
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        database.capture(Analyzer::space_symbol, controller.frame());
+                        database.capture(LearnedGestures::Analyzer::space_symbol, controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        database.capture(Analyzer::period_symbol, controller.frame());
+                        database.capture(LearnedGestures::Analyzer::period_symbol, controller.frame());
                     }
                 }
             }
