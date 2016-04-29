@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10")
 
-project(LeapLearnedGestures)
+project(LeapAsl)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 list(APPEND CMAKE_PREFIX_PATH "/opt/local")
