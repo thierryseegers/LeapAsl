@@ -19,6 +19,15 @@ set(sources
     ${CMAKE_CURRENT_SOURCE_DIR}/Analyzer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp
+    ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
+)
 
 add_library(LeapAsl ${headers} ${sources})
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set_source_files_properties(${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp PROPERTIES
+        COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-unused-private-field")
+    set_source_files_properties(Database.cpp Recognizer.cpp Utility.cpp PROPERTIES
+        COMPILE_FLAGS "-Wno-unused-private-field")
+endif()

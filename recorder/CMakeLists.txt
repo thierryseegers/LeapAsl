@@ -8,12 +8,9 @@ include_directories(
     ${Leap_INCLUDE_DIR}/LeapSDK)
 
 add_executable(recorder
-    ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
     main.cpp)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-unused-private-field")
     set_source_files_properties(main.cpp PROPERTIES
         COMPILE_FLAGS "-Wno-comment -Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-variable")
 endif()

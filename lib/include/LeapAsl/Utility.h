@@ -1,6 +1,8 @@
 #pragma once
 
 #include <LeapSDK/Leap.h>
+#include <LeapSDK/LeapMath.h>
+#include <LeapSDK/util/LeapUtilGL.h>
 
 #include <array>
 #include <limits>
@@ -28,5 +30,10 @@ double difference(fingers_position const& a, fingers_position const& b, double c
 //!  - is scaled to a palm width of 10 centimeters and
 //!  - is rotated such that its palm is flat on the X-Z plane and pointing in the direction of the -Z axis
 Leap::Matrix normalized_hand_transform(Leap::Hand const& hand);
+
+//! Draw a skeleton hand using OpenGL.
+//!
+//! Lifted from sample code, augmented with a transform to apply to the hand.
+void drawTransformedSkeletonHand(Leap::Hand const& hand, Leap::Matrix const& transformation = Leap::Matrix::identity(), LeapUtilGL::GLVector4fv const& bone_color = LeapUtilGL::GLVector4fv::One(), LeapUtilGL::GLVector4fv const& joint_color = LeapUtilGL::GLVector4fv::One());
 
 }
