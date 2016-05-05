@@ -54,7 +54,7 @@ void Analyzer::on_gesture(multimap<double, string> const& matches)
     {
         for(int i : indices)
         {
-            if(top_matches[i].second != Analyzer::space_symbol) // Skip whitespace at the begininng of a sentence.
+            if(top_matches[i].second != " ") // Skip whitespace at the begininng of a sentence.
             {
                 lm::ngram::State out_state;
                 auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
@@ -69,14 +69,14 @@ void Analyzer::on_gesture(multimap<double, string> const& matches)
         
         for(auto const& sentence : sentences_)
         {
-            auto const last_space_ix = sentence.second.first.rfind(Analyzer::space_symbol);
+            auto const last_space_ix = sentence.second.first.rfind(" ");
             auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
             
             for(int i : indices)
             {
                 string const s = top_matches[i].second;
                 
-                if(s == Analyzer::space_symbol)
+                if(s == " ")
                 {
                     if(!last_word.empty())  // Do nothing on double spaces.
                     {
@@ -91,7 +91,7 @@ void Analyzer::on_gesture(multimap<double, string> const& matches)
                         }
                     }
                 }
-                else if(s == Analyzer::period_symbol)
+                else if(s == ".")
                 {
                     if(!last_word.empty())  // Do nothing on double spaces.
                     {
@@ -154,7 +154,7 @@ void Analyzer::on_gesture(multimap<double, string> const& matches)
     on_gesture_(top_matches, top_sentence.second.first);
 }
 
-string const Analyzer::space_symbol = "_", Analyzer::period_symbol = ".", Analyzer::dropped_symbol = "?";
+string const Analyzer::dropped_symbol = "?";
 
 }
 

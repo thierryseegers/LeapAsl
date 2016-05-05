@@ -135,8 +135,6 @@ public:
     
     void on_gesture(std::multimap<double, std::string> const& matches);
     
-    static std::string const space_symbol, period_symbol;
-    
 private:
     static std::string const dropped_symbol;
     
