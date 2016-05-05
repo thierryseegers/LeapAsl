@@ -3,7 +3,6 @@
 #include <LeapSDK/Leap.h>
 
 #include <iostream>
-#include <mutex>
 #include <string>
 
 namespace LearnedGestures
