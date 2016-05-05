@@ -264,26 +264,27 @@ int main()
         window.popGLStates();
         
         auto const& hand = controller.frame().hands()[0];
-        
         if(hand.isValid())
         {
-            // Draw the hand with its original rotation and scale but offset to the left a tad.
+            // Draw the hand with its original rotation and scale but offset to the left of the origin.
             auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition() + Leap::Vector{-200, 0, 0}};
             drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
-
-            // Draw the hand normalized.
+            
+            // Draw the hand normalized and at the origin.
             auto const normalized = LearnedGestures::normalized_hand_transform(hand);
-            drawTransformedSkeletonHand(hand, normalized, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
+            auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition()};
+            drawTransformedSkeletonHand(hand, normalized * centered, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
         }
         
         // Draw the replay hand.
-        if(replay_character.getString() != "" && replay_hand.isValid())
+        if(replay_hand.isValid())
         {
             // Draw the replay hand normalized and offset to the right a tad.
-            auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
+            auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -replay_hand.palmPosition()};
             auto const normalized = LearnedGestures::normalized_hand_transform(replay_hand);
+            auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
             
-            drawTransformedSkeletonHand(replay_hand, offset * normalized, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
+            drawTransformedSkeletonHand(replay_hand, offset * normalized * centered, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
         }
 
         // Finally, display the rendered frame on screen.
