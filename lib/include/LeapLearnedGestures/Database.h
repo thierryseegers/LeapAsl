@@ -5,7 +5,6 @@
 #include <LeapSDK/Leap.h>
 
 #include <map>
-#include <mutex>
 #include <iosfwd>
 #include <string>
 
@@ -30,8 +29,6 @@ public:
 private:
     friend std::ostream& operator<<(std::ostream&, Database const&);
     friend std::istream& operator>>(std::istream&, Database&);
-    
-    std::mutex mutable m_;
     
     std::map<std::string, std::pair<Leap::Frame, fingers_position>> gestures_;
 };

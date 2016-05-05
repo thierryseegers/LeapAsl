@@ -13,8 +13,6 @@ using namespace std;
 
 void Database::capture(string const& name, Leap::Frame const& frame)
 {
-    lock_guard<mutex> l(m_);
-    
     gestures_[name] = make_pair(frame, to_position(frame.hands()[0]));
 }
 
@@ -24,9 +22,6 @@ string Database::match(Leap::Hand const& hand) const
     
     double delta_cap = numeric_limits<double>::max(), delta;
     string name;
-    
-    
-    lock_guard<mutex> l(m_);
     
     for(auto const& gesture : gestures_)
     {
@@ -46,9 +41,6 @@ multimap<double, string> Database::compare(Leap::Hand const& hand) const
     
     auto const normalized = to_position(hand);
     
-    
-    lock_guard<mutex> l(m_);
-    
     for(auto const& gesture : gestures_)
     {
         scores.emplace(difference(gesture.second.second, normalized), gesture.first);
@@ -59,8 +51,6 @@ multimap<double, string> Database::compare(Leap::Hand const& hand) const
 
 Leap::Hand Database::hand(string const& name) const
 {
-    lock_guard<mutex> l(m_);
-    
     return gestures_.at(name).first.hands()[0];
 }
 
