@@ -33,7 +33,7 @@ fingers_position to_position(Leap::Hand const& hand)
 {
     fingers_position fp;
     
-    auto const normalized = normalized_hand_transform(hand);
+    auto const normalized_centered = normalized_hand_transform(hand) * Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition()};
     auto const& fingers = hand.fingers();
     
     for(int f = 0; f != 5; ++f)
@@ -46,12 +46,12 @@ fingers_position to_position(Leap::Hand const& hand)
             
             if(b == Leap::Bone::TYPE_METACARPAL)
             {
-                fp[f][b] += normalized.transformPoint(bone.prevJoint());
-                fp[f][b + 1] = normalized.transformPoint(bone.nextJoint());
+                fp[f][b] += normalized_centered.transformPoint(bone.prevJoint());
+                fp[f][b + 1] = normalized_centered.transformPoint(bone.nextJoint());
             }
             else
             {
-                fp[f][b + 1] = normalized.transformPoint(bone.nextJoint());
+                fp[f][b + 1] = normalized_centered.transformPoint(bone.nextJoint());
             }
         }
     }
