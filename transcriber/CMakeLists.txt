@@ -29,7 +29,7 @@ set_target_properties(transcriber PROPERTIES
     CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(transcriber
-    LeapLearnedGestures
+    LeapAsl
     ${Boost_LIBRARIES}
     ${BZIP2_LIBRARIES}
     ${KenLM_LIBRARIES}

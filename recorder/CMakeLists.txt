@@ -23,7 +23,7 @@ set_target_properties(recorder PROPERTIES
     CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(recorder
-    LeapLearnedGestures
+    LeapAsl
     ${Leap_BUILD_LIBRARIES}
     ${SFML_LIBRARIES}
 )
