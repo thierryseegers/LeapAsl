@@ -9,11 +9,11 @@ include_directories(
     ${Leap_INCLUDE_DIR}/LeapSDK)
 
 set(headers
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Analyzer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Database.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/LearnedGestures.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Recognizer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapLearnedGestures/Utility.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Analyzer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Database.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/LeapAsl.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Recognizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Utility.h)
 
 set(sources
     ${CMAKE_CURRENT_SOURCE_DIR}/Analyzer.cpp

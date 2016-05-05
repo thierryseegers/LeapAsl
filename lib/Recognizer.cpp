@@ -1,6 +1,6 @@
-#include "LeapLearnedGestures/Recognizer.h"
+#include "LeapAsl/Recognizer.h"
 
-#include "LeapLearnedGestures/Database.h"
+#include "LeapAsl/Database.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -10,7 +10,7 @@
 #include <string>
 #include <utility>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 using namespace std;

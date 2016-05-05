@@ -13,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 namespace detail

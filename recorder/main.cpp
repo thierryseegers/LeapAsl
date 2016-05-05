@@ -1,4 +1,4 @@
-#include "LeapLearnedGestures/Database.h"
+#include "LeapAsl/Database.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
@@ -115,7 +115,7 @@ int main()
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    LearnedGestures::Database database;
+    LeapAsl::Database database;
     {
         ifstream gestures_data_istream("gestures", ios::binary);
         if(gestures_data_istream)
@@ -260,7 +260,7 @@ int main()
             drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
 
             // Draw the hand normalized and at the origin.
-            auto const normalized = LearnedGestures::normalized_hand_transform(hand);
+            auto const normalized = LeapAsl::normalized_hand_transform(hand);
             auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition()};
             drawTransformedSkeletonHand(hand, normalized * centered, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
         }
@@ -270,7 +270,7 @@ int main()
         {
             // Draw the replay hand normalized and offset to the right a tad.
             auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -replay_hand.palmPosition()};
-            auto const normalized = LearnedGestures::normalized_hand_transform(replay_hand);
+            auto const normalized = LeapAsl::normalized_hand_transform(replay_hand);
             auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
             
             drawTransformedSkeletonHand(replay_hand, offset * normalized * centered, LeapUtilGL::GLVector4fv{0, 0, 1, 1});

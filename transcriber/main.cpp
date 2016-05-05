@@ -1,4 +1,4 @@
-#include "LeapLearnedGestures/LearnedGestures.h"
+#include "LeapAsl/LeapAsl.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
@@ -130,9 +130,9 @@ int main()
         asl_sentence.setString(s);
     };
     
-    LearnedGestures::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
+    LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
-    LearnedGestures::Database database;
+    LeapAsl::Database database;
     {
         ifstream gestures_data_istream("gestures", ios::binary);
         if(!gestures_data_istream)
@@ -144,7 +144,7 @@ int main()
     }
     
     Leap::Controller controller;
-    LearnedGestures::Recognizer recognizer(controller, database, bind(&LearnedGestures::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer recognizer(controller, database, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
 
     Leap::Hand replay_hand;
 
@@ -271,7 +271,7 @@ int main()
             drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
             
             // Draw the hand normalized and at the origin.
-            auto const normalized = LearnedGestures::normalized_hand_transform(hand);
+            auto const normalized = LeapAsl::normalized_hand_transform(hand);
             auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition()};
             drawTransformedSkeletonHand(hand, normalized * centered, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
         }
@@ -281,7 +281,7 @@ int main()
         {
             // Draw the replay hand normalized and offset to the right a tad.
             auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -replay_hand.palmPosition()};
-            auto const normalized = LearnedGestures::normalized_hand_transform(replay_hand);
+            auto const normalized = LeapAsl::normalized_hand_transform(replay_hand);
             auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
             
             drawTransformedSkeletonHand(replay_hand, offset * normalized * centered, LeapUtilGL::GLVector4fv{0, 0, 1, 1});

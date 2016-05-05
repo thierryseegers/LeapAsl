@@ -1,11 +1,11 @@
-#include "include/LeapLearnedGestures/Database.h"
+#include "include/LeapAsl/Database.h"
 
 #include <LeapSDK/Leap.h>
 
 #include <iostream>
 #include <string>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 using namespace std;

@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <string>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 class Database

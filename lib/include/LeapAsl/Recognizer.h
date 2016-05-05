@@ -11,7 +11,7 @@
 #include <map>
 #include <string>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 class Recognizer : public Leap::Listener

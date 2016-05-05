@@ -6,7 +6,7 @@
 #include <limits>
 #include <vector>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
     
 using joint_position = Leap::Vector;                        //!< The position of a joint in space.

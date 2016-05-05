@@ -1,8 +1,8 @@
-#include "include/LeapLearnedGestures/Utility.h"
+#include "include/LeapAsl/Utility.h"
 
 #include <LeapSDK/Leap.h>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 using namespace std;

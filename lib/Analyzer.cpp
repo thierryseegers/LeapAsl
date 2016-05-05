@@ -1,4 +1,4 @@
-#include "include/LeapLearnedGestures/Analyzer.h"
+#include "include/LeapAsl/Analyzer.h"
 
 #include <lm/model.hh>
 
@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-namespace LearnedGestures
+namespace LeapAsl
 {
 
 using namespace std;
