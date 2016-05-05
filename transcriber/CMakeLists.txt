@@ -13,8 +13,7 @@ include_directories(
     ${Leap_INCLUDE_DIR}
     ${Leap_INCLUDE_DIR}/LeapSDK)
 
-add_executable(demo
-    ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtil.cpp
+add_executable(transcriber
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
     main.cpp)
 
@@ -25,11 +24,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         COMPILE_FLAGS "-Wno-comment -Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-variable")
 endif()
 
-set_target_properties(demo PROPERTIES
+set_target_properties(transcriber PROPERTIES
     CXX_STANDARD 14
     CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(demo
+target_link_libraries(transcriber
     LeapLearnedGestures
     ${Boost_LIBRARIES}
     ${BZIP2_LIBRARIES}
@@ -39,13 +38,14 @@ target_link_libraries(demo
     ${ZLIB_LIBRARIES})
 
 if(APPLE)
-    target_link_libraries(demo
+    target_link_libraries(transcriber
         "-framework GLUT"
         "-framework OpenGL")
 endif()
 
-add_custom_command(TARGET demo POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded" $<TARGET_FILE_DIR:demo>
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet_corpus.mmap" $<TARGET_FILE_DIR:demo>
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:demo>/resources
+add_custom_command(TARGET transcriber POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:recorder>/gestures $<TARGET_FILE_DIR:transcriber>
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded" $<TARGET_FILE_DIR:transcriber>
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet_corpus.mmap" $<TARGET_FILE_DIR:transcriber>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:transcriber>/resources
 )

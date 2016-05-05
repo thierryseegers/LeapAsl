@@ -2,7 +2,6 @@
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
-#include <LeapSDK/util/LeapUtil.h>
 #include <LeapSDK/util/LeapUtilGL.h>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
@@ -99,14 +98,14 @@ void drawTransformedSkeletonHand(Leap::Hand const& hand,
 int main()
 {
     sf::Font font;
-    if(!font.loadFromFile("resources/Inconsolata.otf"))
+    if(!font.loadFromFile("resources/arial.ttf"))
     {
         return EXIT_FAILURE;
     }
     
-    sf::Text asl_letter = sf::Text("", font, 30);
-    asl_letter.setColor(sf::Color(255, 255, 255, 170));
-    asl_letter.setPosition(20.f, 400.f);
+    sf::Text asl_character = sf::Text("", font, 30);
+    asl_character.setColor(sf::Color(255, 255, 255, 170));
+    asl_character.setPosition(20.f, 400.f);
     
     sf::Text asl_sentence = sf::Text("", font, 30);
     asl_sentence.setColor(sf::Color(255, 255, 255, 170));
@@ -116,17 +115,19 @@ int main()
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    auto const on_gesture = [&asl_letter, &asl_sentence](vector<pair<double, string>> const& top_matches, string const& top_sentence)
+    auto const on_gesture = [&asl_character, &asl_sentence](vector<pair<double, string>> const& top_matches, string const& top_sentence)
     {
         stringstream ss;
         for(auto const& top_match : top_matches)
         {
-            ss << '\'' << top_match.second << "' [" << top_match.first << "]\n";
+            ss << '\'' << (top_match.second == " " ? "_" : top_match.second) << "' [" << top_match.first << "]\n";
         }
         
-        asl_letter.setString(ss.str());
+        asl_character.setString(ss.str());
         
-        asl_sentence.setString(top_sentence);
+        sf::String s = top_sentence;
+        s.replace(" ", "_");
+        asl_sentence.setString(s);
     };
     
     LearnedGestures::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
@@ -154,7 +155,7 @@ int main()
     contextSettings.antialiasingLevel = 4;
 
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Demo", sf::Style::Default, contextSettings);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Transcriber", sf::Style::Default, contextSettings);
     window.setVerticalSyncEnabled(true);
 
     // Make the window the active target for OpenGL calls
@@ -206,37 +207,39 @@ int main()
             
             if(event.type == sf::Event::KeyPressed)
             {
+                // Clear current sentence.
                 if(event.key.code == sf::Keyboard::Delete ||
                    event.key.code == sf::Keyboard::BackSpace)
                 {
                     analyzer.reset();
                 }
+                // Look up a pre-recorded character.
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) ||
                         sf::Keyboard::isKeyPressed(sf::Keyboard::RAlt))
                 {
-                    if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
+                    try
                     {
-                        if(replay_character.getString().isEmpty() ||
-                           char(event.key.code + 'a' != replay_character.getString()[0]))
+                        if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
                             replay_hand = database.hand(replay_character.getString());
                         }
+                        else if(event.key.code == sf::Keyboard::Space)
+                        {
+                            replay_character.setString("_");
+                            replay_hand = database.hand(" ");
+                        }
+                        else if(event.key.code == sf::Keyboard::Period)
+                        {
+                            replay_character.setString(".");
+                            replay_hand = database.hand(replay_character.getString());
+                        }
+                        
                     }
-                }
-                else if(controller.frame().hands()[0].isValid())
-                {
-                    if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
+                    catch(out_of_range const& e)
                     {
-                        database.capture(string(1, event.key.code + 'a'), controller.frame());
-                    }
-                    else if(event.key.code == sf::Keyboard::Space)
-                    {
-                        database.capture(LearnedGestures::Analyzer::space_symbol, controller.frame());
-                    }
-                    else if(event.key.code == sf::Keyboard::Period)
-                    {
-                        database.capture(LearnedGestures::Analyzer::period_symbol, controller.frame());
+                        replay_character.setString("<?>");
+                        replay_hand = Leap::Hand::invalid();
                     }
                 }
             }
@@ -247,13 +250,13 @@ int main()
         window.pushGLStates();
         {
             // Draw the last recognized letter.
-            window.draw(asl_letter);
+            window.draw(asl_character);
             
             // Draw the current best word.
             window.draw(asl_sentence);
             
             // Draw the replay character.
-            if(replay_character.getString() != "" && replay_hand.isValid())
+            if(replay_character.getString() != "")
             {
                 window.draw(replay_character);
             }
@@ -285,24 +288,6 @@ int main()
 
         // Finally, display the rendered frame on screen.
         window.display();
-    }
-    
-    // Save the database to file.
-    try
-    {
-        string const temp_filename = tmpnam(nullptr);
-        
-        ofstream gestures_data_ostream(temp_filename.c_str(), ios::binary);
-        if(gestures_data_ostream)
-        {
-            gestures_data_ostream << database;
-        }
-        
-        rename(temp_filename.c_str(), "gestures");
-    }
-    catch(exception const& e)
-    {
-        cout << "Failed to write gestures to disk" << endl << e.what() << endl;
     }
 
     return 0;

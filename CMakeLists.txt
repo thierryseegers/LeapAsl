@@ -15,4 +15,5 @@ if(CMAKE_GENERATOR STREQUAL Xcode)
 endif()
 
 add_subdirectory(lib)
-add_subdirectory(demo)
+add_subdirectory(recorder)
+add_subdirectory(transcriber)
