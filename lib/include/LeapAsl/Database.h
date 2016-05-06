@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Utility.h"
+#include "LeapAsl/Utility.h"
 
 #include <LeapSDK/Leap.h>
 

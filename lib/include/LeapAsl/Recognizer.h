@@ -1,8 +1,7 @@
 #pragma once
 
-#include "Utility.h"
-
-#include "Database.h"
+#include "LeapAsl/Database.h"
+#include "LeapAsl/Utility.h"
 
 #include <LeapSDK/Leap.h>
 

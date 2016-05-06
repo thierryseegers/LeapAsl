@@ -1,4 +1,4 @@
-#include "include/LeapAsl/Database.h"
+#include "LeapAsl/Database.h"
 
 #include <LeapSDK/Leap.h>
 
