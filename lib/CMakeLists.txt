@@ -16,7 +16,8 @@ set(sources
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
 )
 
-add_library(LeapAsl ${headers} ${sources})
+add_library(LeapAsl::LeapAsl ALIAS LeapAsl)
+
 target_include_directories(LeapAsl
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PUBLIC ${KenLM_INCLUDE_DIRS}
