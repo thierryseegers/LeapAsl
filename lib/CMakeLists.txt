@@ -23,7 +23,6 @@ target_include_directories(LeapAsl
     PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
 )
 
-
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set_source_files_properties(${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp PROPERTIES
         COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-unused-private-field")

@@ -1,14 +1,16 @@
 find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/lib/include
-    ${Leap_INCLUDE_DIR}
-    ${Leap_INCLUDE_DIR}/LeapSDK)
-
 add_executable(recorder
-    main.cpp)
+    main.cpp
+)
+
+target_include_directories(recorder
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${PROJECT_SOURCE_DIR}/lib/include
+    PRIVATE ${Leap_INCLUDE_DIR}
+    PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
+)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set_source_files_properties(main.cpp PROPERTIES

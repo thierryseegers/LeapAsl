@@ -5,16 +5,17 @@ find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
 find_package(ZLIB REQUIRED)
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/lib/include
-    ${BOOST_INCLUDEDIR}
-    ${KenLM_INCLUDE_DIRS}
-    ${Leap_INCLUDE_DIR}
-    ${Leap_INCLUDE_DIR}/LeapSDK)
-
 add_executable(transcriber
     main.cpp)
+
+target_include_directories(transcriber
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+    PRIVATE ${PROJECT_SOURCE_DIR}/lib/include
+    PRIVATE ${BOOST_INCLUDEDIR}
+    PRIVATE ${KenLM_INCLUDE_DIRS}
+    PRIVATE ${Leap_INCLUDE_DIR}
+    PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
+)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set_source_files_properties(main.cpp PROPERTIES
