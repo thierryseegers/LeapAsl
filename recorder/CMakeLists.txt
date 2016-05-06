@@ -20,15 +20,15 @@ set_target_properties(recorder PROPERTIES
     CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(recorder
-    LeapAsl
-    ${Leap_BUILD_LIBRARIES}
-    ${SFML_LIBRARIES}
+    PRIVATE LeapAsl::LeapAsl
+    PRIVATE ${Leap_BUILD_LIBRARIES}
+    PRIVATE ${SFML_LIBRARIES}
 )
 
 if(APPLE)
     target_link_libraries(recorder
-        "-framework GLUT"
-        "-framework OpenGL")
+        PRIVATE "-framework GLUT"
+        PRIVATE "-framework OpenGL")
 endif()
 
 add_custom_command(TARGET recorder POST_BUILD

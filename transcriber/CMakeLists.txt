@@ -26,18 +26,18 @@ set_target_properties(transcriber PROPERTIES
     CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(transcriber
-    LeapAsl
-    ${Boost_LIBRARIES}
-    ${BZIP2_LIBRARIES}
-    ${KenLM_LIBRARIES}
-    ${Leap_BUILD_LIBRARIES}
-    ${SFML_LIBRARIES}
-    ${ZLIB_LIBRARIES})
+    PRIVATE LeapAsl::LeapAsl
+    PRIVATE ${Boost_LIBRARIES}
+    PRIVATE ${BZIP2_LIBRARIES}
+    PRIVATE ${KenLM_LIBRARIES}
+    PRIVATE ${Leap_BUILD_LIBRARIES}
+    PRIVATE ${SFML_LIBRARIES}
+    PRIVATE ${ZLIB_LIBRARIES})
 
 if(APPLE)
     target_link_libraries(transcriber
-        "-framework GLUT"
-        "-framework OpenGL")
+        PRIVATE "-framework GLUT"
+        PRIVATE "-framework OpenGL")
 endif()
 
 add_custom_command(TARGET transcriber POST_BUILD

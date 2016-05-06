@@ -1,13 +1,6 @@
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${KenLM_INCLUDE_DIRS}
-    ${Leap_INCLUDE_DIR}
-    ${Leap_INCLUDE_DIR}/LeapSDK)
-
 set(headers
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Analyzer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Database.h
@@ -24,6 +17,13 @@ set(sources
 )
 
 add_library(LeapAsl ${headers} ${sources})
+target_include_directories(LeapAsl
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PUBLIC ${KenLM_INCLUDE_DIRS}
+    PUBLIC ${Leap_INCLUDE_DIR}
+    PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
+)
+
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set_source_files_properties(${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp PROPERTIES
