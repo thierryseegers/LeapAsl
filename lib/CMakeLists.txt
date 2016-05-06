@@ -16,16 +16,22 @@ add_library(LeapAsl
 
 add_library(LeapAsl::LeapAsl ALIAS LeapAsl)
 
-target_include_directories(LeapAsl
+set_target_properties(LeapAsl::LeapAsl PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+   CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(recorder
+        PUBLIC -Wno-deprecated-declarations
+        PUBLIC -Wno-unused-private-field
+    )
+endif()
+
+target_include_directories(LeapAsl::LeapAsl
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PUBLIC ${KenLM_INCLUDE_DIRS}
     PUBLIC ${Leap_INCLUDE_DIR}
     PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
 )
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-unused-private-field")
-    set_source_files_properties(Database.cpp Recognizer.cpp Utility.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-unused-private-field")
-endif()

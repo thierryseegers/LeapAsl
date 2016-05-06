@@ -5,21 +5,27 @@ add_executable(recorder
     main.cpp
 )
 
+set_target_properties(recorder PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+   CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(recorder
+        PUBLIC -Wno-comment
+        PUBLIC -Wno-deprecated-declarations
+        PUBLIC -Wno-unused-private-field
+        PUBLIC -Wno-unused-variable
+    )
+endif()
+
 target_include_directories(recorder
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${PROJECT_SOURCE_DIR}/lib/include
     PRIVATE ${Leap_INCLUDE_DIR}
     PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
 )
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(main.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-comment -Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-variable")
-endif()
-
-set_target_properties(recorder PROPERTIES
-    CXX_STANDARD 14
-    CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(recorder
     PRIVATE LeapAsl::LeapAsl
