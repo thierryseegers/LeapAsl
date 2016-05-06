@@ -1,14 +1,12 @@
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
 
-set(headers
+add_library(LeapAsl
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Analyzer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Database.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/LeapAsl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Recognizer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Utility.h)
-
-set(sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Utility.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Analyzer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
