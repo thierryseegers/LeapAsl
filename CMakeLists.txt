@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10")
 
-project(LeapAsl)
+project(LeapAsl VERSION 0.9 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 list(APPEND CMAKE_PREFIX_PATH "/opt/local")
