@@ -21,14 +21,6 @@ set_target_properties(LeapAsl::LeapAsl PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
-   CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    target_compile_options(recorder
-        PUBLIC -Wno-deprecated-declarations
-        PUBLIC -Wno-unused-private-field
-    )
-endif()
-
 target_include_directories(LeapAsl::LeapAsl
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PUBLIC ${KenLM_INCLUDE_DIRS}
