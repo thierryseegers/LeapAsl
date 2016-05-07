@@ -21,8 +21,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
 endif()
 
 target_include_directories(recorder
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
-    PRIVATE ${PROJECT_SOURCE_DIR}/lib/include
     PRIVATE ${Leap_INCLUDE_DIR}
     PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
 )
@@ -36,7 +34,8 @@ target_link_libraries(recorder
 if(APPLE)
     target_link_libraries(recorder
         PRIVATE "-framework GLUT"
-        PRIVATE "-framework OpenGL")
+        PRIVATE "-framework OpenGL"
+    )
 endif()
 
 add_custom_command(TARGET recorder POST_BUILD
