@@ -19,19 +19,20 @@ add_library(LeapAsl
 
 add_library(LeapAsl::LeapAsl ALIAS LeapAsl)
 
-set_target_properties(LeapAsl::LeapAsl PROPERTIES
+set_target_properties(LeapAsl PROPERTIES
     CXX_STANDARD 14
     CXX_STANDARD_REQUIRED ON
 )
 
-target_include_directories(LeapAsl::LeapAsl
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+target_include_directories(LeapAsl
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
     PUBLIC ${KenLM_INCLUDE_DIRS}
     PUBLIC ${Leap_INCLUDE_DIR}
     PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
 )
 
-target_link_libraries(LeapAsl::LeapAsl
+target_link_libraries(LeapAsl
     PRIVATE ${Boost_LIBRARIES}
     PRIVATE ${BZIP2_LIBRARIES}
     PRIVATE ${KenLM_LIBRARIES}
