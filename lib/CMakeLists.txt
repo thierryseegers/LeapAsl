@@ -24,6 +24,14 @@ set_target_properties(LeapAsl PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+   CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(LeapAsl
+        PUBLIC -Wno-deprecated-declarations
+        PUBLIC -Wno-unused-private-field
+    )
+endif()
+
 target_include_directories(LeapAsl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PUBLIC $<INSTALL_INTERFACE:include>
