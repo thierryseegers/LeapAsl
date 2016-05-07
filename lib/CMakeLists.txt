@@ -1,5 +1,9 @@
+find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(BZip2 REQUIRED)
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
+find_package(SFML REQUIRED COMPONENTS graphics system window)
+find_package(ZLIB REQUIRED)
 
 add_library(LeapAsl
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Analyzer.h
@@ -26,4 +30,13 @@ target_include_directories(LeapAsl::LeapAsl
     PUBLIC ${KenLM_INCLUDE_DIRS}
     PUBLIC ${Leap_INCLUDE_DIR}
     PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
+)
+
+target_link_libraries(LeapAsl::LeapAsl
+    PRIVATE ${Boost_LIBRARIES}
+    PRIVATE ${BZIP2_LIBRARIES}
+    PRIVATE ${KenLM_LIBRARIES}
+    PRIVATE ${Leap_BUILD_LIBRARIES}
+    PRIVATE ${SFML_LIBRARIES}
+    PRIVATE ${ZLIB_LIBRARIES}
 )

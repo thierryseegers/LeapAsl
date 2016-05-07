@@ -1,9 +1,5 @@
-find_package(Boost REQUIRED COMPONENTS system thread)
-find_package(BZip2 REQUIRED)
-find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
-find_package(ZLIB REQUIRED)
 
 add_executable(transcriber
     main.cpp
@@ -27,20 +23,15 @@ endif()
 target_include_directories(transcriber
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
     PRIVATE ${PROJECT_SOURCE_DIR}/lib/include
-    PRIVATE ${BOOST_INCLUDEDIR}
-    PRIVATE ${KenLM_INCLUDE_DIRS}
     PRIVATE ${Leap_INCLUDE_DIR}
     PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
 )
 
 target_link_libraries(transcriber
     PRIVATE LeapAsl::LeapAsl
-    PRIVATE ${Boost_LIBRARIES}
-    PRIVATE ${BZIP2_LIBRARIES}
-    PRIVATE ${KenLM_LIBRARIES}
     PRIVATE ${Leap_BUILD_LIBRARIES}
     PRIVATE ${SFML_LIBRARIES}
-    PRIVATE ${ZLIB_LIBRARIES})
+)
 
 if(APPLE)
     target_link_libraries(transcriber
