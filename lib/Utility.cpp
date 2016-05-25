@@ -79,7 +79,7 @@ Leap::Matrix normalized_hand_transform(Leap::Hand const& hand)
     return normalized;
 }
 
-void drawTransformedSkeletonHand(Leap::Hand const& hand, Leap::Matrix const& transformation, LeapUtilGL::GLVector4fv const& bone_color, LeapUtilGL::GLVector4fv const& joint_color)
+void draw_skeleton_hand(Leap::Hand const& hand, Leap::Matrix const& transformation, LeapUtilGL::GLVector4fv const& bone_color, LeapUtilGL::GLVector4fv const& joint_color)
 {
     static float const joint_radius_scale = 0.75f;
     static float const bone_radius_scale = 0.5f;

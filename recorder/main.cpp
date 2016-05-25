@@ -183,12 +183,12 @@ int main()
         {
             // Draw the hand with its original rotation and scale but offset to the left of the origin.
             auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition() + Leap::Vector{-200, 0, 0}};
-            LeapAsl::drawTransformedSkeletonHand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
+            LeapAsl::draw_skeleton_hand(hand, offset, LeapUtilGL::GLVector4fv{1, 0, 0, 1});
 
             // Draw the hand normalized and at the origin.
             auto const normalized = LeapAsl::normalized_hand_transform(hand);
             auto const centered = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition()};
-            LeapAsl::drawTransformedSkeletonHand(hand, normalized * centered, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
+            LeapAsl::draw_skeleton_hand(hand, normalized * centered, LeapUtilGL::GLVector4fv{0, 1, 0, 1});
         }
         
         // Draw the replay hand.
@@ -199,7 +199,7 @@ int main()
             auto const normalized = LeapAsl::normalized_hand_transform(replay_hand);
             auto const offset = Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, Leap::Vector{+200, 0, 0}};
             
-            LeapAsl::drawTransformedSkeletonHand(replay_hand, offset * normalized * centered, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
+            LeapAsl::draw_skeleton_hand(replay_hand, offset * normalized * centered, LeapUtilGL::GLVector4fv{0, 0, 1, 1});
         }
 
         // Finally, display the rendered frame on screen.

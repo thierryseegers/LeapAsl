@@ -34,6 +34,6 @@ Leap::Matrix normalized_hand_transform(Leap::Hand const& hand);
 //! Draw a skeleton hand using OpenGL.
 //!
 //! Lifted from sample code, augmented with a transform to apply to the hand.
-void drawTransformedSkeletonHand(Leap::Hand const& hand, Leap::Matrix const& transformation = Leap::Matrix::identity(), LeapUtilGL::GLVector4fv const& bone_color = LeapUtilGL::GLVector4fv::One(), LeapUtilGL::GLVector4fv const& joint_color = LeapUtilGL::GLVector4fv::One());
+void draw_skeleton_hand(Leap::Hand const& hand, Leap::Matrix const& transformation = Leap::Matrix::identity(), LeapUtilGL::GLVector4fv const& bone_color = LeapUtilGL::GLVector4fv::One(), LeapUtilGL::GLVector4fv const& joint_color = LeapUtilGL::GLVector4fv::One());
 
 }
