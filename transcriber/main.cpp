@@ -63,7 +63,11 @@ int main()
         ifstream gestures_data_istream("gestures", ios::binary);
         if(!gestures_data_istream)
         {
-            return EXIT_FAILURE;
+            gestures_data_istream.open("gestures.sample", ios::binary);
+            if(!gestures_data_istream)
+            {
+                return EXIT_FAILURE;
+            }
         }
         
         gestures_data_istream >> database;

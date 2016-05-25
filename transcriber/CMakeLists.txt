@@ -2,6 +2,7 @@ find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
 
 add_executable(transcriber
+    gestures.sample
     main.cpp
 )
 
@@ -39,8 +40,12 @@ if(APPLE)
 endif()
 
 add_custom_command(TARGET transcriber POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:recorder>/gestures $<TARGET_FILE_DIR:transcriber>
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded" $<TARGET_FILE_DIR:transcriber>
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet_corpus.mmap" $<TARGET_FILE_DIR:transcriber>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded" $<TARGET_FILE_DIR:transcriber>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet_corpus.mmap" $<TARGET_FILE_DIR:transcriber>
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:transcriber>/resources
+)
+
+add_custom_command(TARGET transcriber POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/gestures.sample" $<TARGET_FILE_DIR:transcriber>/gestures.sample
+    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/gestures.sample"
 )
