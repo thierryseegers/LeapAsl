@@ -2,15 +2,12 @@ cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 
 project(LeapAsl VERSION 0.9 LANGUAGES CXX)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
-list(APPEND CMAKE_PREFIX_PATH "/opt/local")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-if(CMAKE_GENERATOR STREQUAL Xcode)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.10")
-    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++14")
-	set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-	list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
+# This is just to shush a warning from FindLeap.cmake.
+if(NOT MSVC)
+    list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++")
 endif()
 
 add_subdirectory(lib)
