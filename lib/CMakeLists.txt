@@ -43,7 +43,7 @@ target_include_directories(LeapAsl
 target_link_libraries(LeapAsl
     PRIVATE ${Boost_LIBRARIES}
     PRIVATE ${BZIP2_LIBRARIES}
-    PRIVATE ${KenLM_LIBRARIES}
-    PRIVATE ${Leap_BUILD_LIBRARIES}
+    PUBLIC ${KenLM_LIBRARIES}
+    PUBLIC ${Leap_BUILD_LIBRARIES}
     PRIVATE ${ZLIB_LIBRARIES}
 )
