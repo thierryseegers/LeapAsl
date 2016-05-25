@@ -1,43 +1,41 @@
-find_package(Boost REQUIRED COMPONENTS system thread)
-find_package(BZip2 REQUIRED)
-find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
-find_package(ZLIB REQUIRED)
-
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/lib/include
-    ${BOOST_INCLUDEDIR}
-    ${KenLM_INCLUDE_DIRS}
-    ${Leap_INCLUDE_DIR}
-    ${Leap_INCLUDE_DIR}/LeapSDK)
 
 add_executable(transcriber
-    main.cpp)
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(main.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-comment -Wno-deprecated-declarations -Wno-unused-private-field -Wno-unused-variable")
-endif()
+    main.cpp
+)
 
 set_target_properties(transcriber PROPERTIES
     CXX_STANDARD 14
-    CXX_STANDARD_REQUIRED ON)
+    CXX_STANDARD_REQUIRED ON
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+   CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(transcriber
+        PUBLIC -Wno-comment
+        PUBLIC -Wno-deprecated-declarations
+        PUBLIC -Wno-unused-private-field
+        PUBLIC -Wno-unused-variable
+    )
+endif()
+
+target_include_directories(transcriber
+    PRIVATE ${Leap_INCLUDE_DIR}
+    PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
+)
 
 target_link_libraries(transcriber
-    LeapAsl
-    ${Boost_LIBRARIES}
-    ${BZIP2_LIBRARIES}
-    ${KenLM_LIBRARIES}
-    ${Leap_BUILD_LIBRARIES}
-    ${SFML_LIBRARIES}
-    ${ZLIB_LIBRARIES})
+    PRIVATE LeapAsl::LeapAsl
+    PRIVATE ${Leap_BUILD_LIBRARIES}
+    PRIVATE ${SFML_LIBRARIES}
+)
 
 if(APPLE)
     target_link_libraries(transcriber
-        "-framework GLUT"
-        "-framework OpenGL")
+        PRIVATE "-framework GLUT"
+        PRIVATE "-framework OpenGL"
+    )
 endif()
 
 add_custom_command(TARGET transcriber POST_BUILD

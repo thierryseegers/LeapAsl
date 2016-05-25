@@ -1,21 +1,15 @@
+find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(BZip2 REQUIRED)
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
+find_package(ZLIB REQUIRED)
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${KenLM_INCLUDE_DIRS}
-    ${Leap_INCLUDE_DIR}
-    ${Leap_INCLUDE_DIR}/LeapSDK)
-
-set(headers
+add_library(LeapAsl
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Analyzer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Database.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/LeapAsl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Recognizer.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Utility.h)
-
-set(sources
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Utility.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Analyzer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Database.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
@@ -23,11 +17,33 @@ set(sources
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
 )
 
-add_library(LeapAsl ${headers} ${sources})
+add_library(LeapAsl::LeapAsl ALIAS LeapAsl)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-unused-private-field")
-    set_source_files_properties(Database.cpp Recognizer.cpp Utility.cpp PROPERTIES
-        COMPILE_FLAGS "-Wno-unused-private-field")
+set_target_properties(LeapAsl PROPERTIES
+    CXX_STANDARD 14
+    CXX_STANDARD_REQUIRED ON
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
+   CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    target_compile_options(LeapAsl
+        PUBLIC -Wno-deprecated-declarations
+        PUBLIC -Wno-unused-private-field
+    )
 endif()
+
+target_include_directories(LeapAsl
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PUBLIC $<INSTALL_INTERFACE:include>
+    PUBLIC ${KenLM_INCLUDE_DIRS}
+    PUBLIC ${Leap_INCLUDE_DIR}
+    PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
+)
+
+target_link_libraries(LeapAsl
+    PRIVATE ${Boost_LIBRARIES}
+    PRIVATE ${BZIP2_LIBRARIES}
+    PRIVATE ${KenLM_LIBRARIES}
+    PRIVATE ${Leap_BUILD_LIBRARIES}
+    PRIVATE ${ZLIB_LIBRARIES}
+)

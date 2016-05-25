@@ -1,4 +1,4 @@
-#include "include/LeapAsl/Utility.h"
+#include "LeapAsl/Utility.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
