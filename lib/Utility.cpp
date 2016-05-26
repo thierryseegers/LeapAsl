@@ -85,8 +85,6 @@ void draw_skeleton_hand(Leap::Hand const& hand, Leap::Matrix const& transformati
     static float const bone_radius_scale = 0.5f;
     static float const palm_radius_scale = 1.15f;
     
-    LeapUtilGL::GLAttribScope colorScope(GL_CURRENT_BIT);
-    
     Leap::Vector const palm = hand.palmPosition();
     Leap::Vector const palm_direction = hand.direction();
     Leap::Vector const palm_normal = hand.palmNormal();
