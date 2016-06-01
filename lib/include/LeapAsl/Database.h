@@ -31,6 +31,10 @@ private:
     friend std::istream& operator>>(std::istream&, Database&);
     
     std::map<std::string, std::pair<Leap::Frame, fingers_position>> gestures_;
+    
+    // This is a workaround for a bug in Leap whereby round-tripping a frame's serialized data does not produce stable data.
+    std::vector<std::string> added_gestures_;
+    std::string serialized_data_;
 };
 
 }

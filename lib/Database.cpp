@@ -3,6 +3,7 @@
 #include <LeapSDK/Leap.h>
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 namespace LeapAsl
@@ -12,6 +13,8 @@ using namespace std;
 
 void Database::capture(string const& name, Leap::Frame const& frame)
 {
+    added_gestures_.push_back(name);
+    
     gestures_[name] = make_pair(frame, to_position(frame.hands()[0]));
 }
 
@@ -55,13 +58,17 @@ Leap::Hand Database::hand(string const& name) const
 
 ostream& operator<<(ostream& o, Database const& t)
 {
-    o << t.gestures_.size() << '\n';
+    o << t.serialized_data_;
     
-    for(auto const& gesture : t.gestures_)
+    for(auto const& name : t.added_gestures_)
     {
-        o << gesture.first << '\n';
+        auto const& gesture = t.gestures_.at(name);
         
-        for(auto const& finger : gesture.second.second)
+        // Write the name.
+        o << name << '\n';
+        
+        // Write the spatial positions of the joints.
+        for(auto const& finger : gesture.second)
         {
             for(auto const& joint : finger)
             {
@@ -69,8 +76,8 @@ ostream& operator<<(ostream& o, Database const& t)
             }
         }
         
-        auto const serialized_frame = gesture.second.first.serialize();
-        
+        // Write the serialized frame data.
+        auto const serialized_frame = gesture.first.serialize();
         o << serialized_frame.length() << '\n' << serialized_frame << '\n';
     }
     
@@ -81,34 +88,43 @@ istream& operator>>(istream& i, Database& t)
 {
     Leap::Controller controller;
     
+    // Copy the file data so we can write it verbatim later on.
+    stringstream ss;
+    ss << i.rdbuf();
+    t.serialized_data_ = ss.str();
+    
+    // Read gestures data.
     t.gestures_.clear();
-    
-    size_t gesture_count;
-    i >> gesture_count;
-    i.ignore();
-    
-    string name;
-    for(size_t j = 0; j != gesture_count; ++j)
+    while(ss)
     {
-        getline(i, name);
+        // Read the name.
+        string name;
+        getline(ss, name);
         
-        auto& data = t.gestures_[name];
-        
-        for(auto& finger : data.second)
+        if(ss)
         {
-            for(auto& joint : finger)
+            auto& data = t.gestures_[name];
+            
+            // Read the spatial positions of the joints.
+            for(auto& finger : data.second)
             {
-                i >> joint.x >> joint.y >> joint.z;
+                for(auto& joint : finger)
+                {
+                    ss >> joint.x >> joint.y >> joint.z;
+                }
             }
+            
+            // Read the serialized frame data.
+            string::size_type serialized_length;
+            ss >> serialized_length;
+            ss.ignore();
+            
+            string serialized_frame(serialized_length, '\0');
+            ss.read(&*serialized_frame.begin(), serialized_length);
+            ss.ignore();
+            
+            data.first.deserialize(serialized_frame);
         }
-        
-        string::size_type serialized_length;
-        i >> serialized_length >> ws;
-        
-        string serialized_frame(serialized_length, '\0');
-        i.read(&*serialized_frame.begin(), serialized_length) >> ws;
-        
-        data.first.deserialize(serialized_frame);
     }
     
     return i;
