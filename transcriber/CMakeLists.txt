@@ -3,6 +3,7 @@ find_package(SFML REQUIRED COMPONENTS graphics system window)
 
 add_executable(transcriber
     gestures.sample
+    levhenstein_distance.h
     main.cpp
 )
 

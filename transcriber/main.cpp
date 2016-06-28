@@ -1,3 +1,5 @@
+#include "levhenstein_distance.h"
+
 #include "LeapAsl/LeapAsl.h"
 
 #include <LeapSDK/Leap.h>
@@ -41,7 +43,17 @@ int main()
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    auto const on_gesture = [&asl_character, &asl_sentence](vector<pair<double, string>> const& top_matches, string const& top_sentence)
+    sf::Text current_levhenstein_distance = sf::Text("", font, 30);
+    current_levhenstein_distance.setColor(sf::Color(255, 255, 255, 170));
+    current_levhenstein_distance.setPosition(400.f, 450.f);
+    
+    sf::Text cumulative_levhenstein_distance = sf::Text("", font, 30);
+    cumulative_levhenstein_distance.setColor(sf::Color(255, 255, 255, 170));
+    cumulative_levhenstein_distance.setPosition(400.f, 480.f);
+
+    string last_top_sentence;
+    size_t cumulative_distance = 0;
+    auto const on_gesture = [&](vector<pair<double, string>> const& top_matches, string const& top_sentence)
     {
         stringstream ss;
         for(auto const& top_match : top_matches)
@@ -54,6 +66,16 @@ int main()
         sf::String s = top_sentence;
         s.replace(" ", "_");
         asl_sentence.setString(s);
+        
+        if(!last_top_sentence.empty())
+        {
+            auto const distance = levenshtein_distance(last_top_sentence, top_sentence);
+            cumulative_distance += distance;
+            
+            current_levhenstein_distance.setString("Error: " + to_string(distance));
+            cumulative_levhenstein_distance.setString("Cumulative error: " + to_string(cumulative_distance));
+        }
+        last_top_sentence = top_sentence;
     };
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
@@ -142,6 +164,11 @@ int main()
                    event.key.code == sf::Keyboard::BackSpace)
                 {
                     analyzer.reset();
+                    
+                    last_top_sentence.clear();
+                    cumulative_distance = 0;
+                    current_levhenstein_distance.setString("Error: 0");
+                    cumulative_levhenstein_distance.setString("Cumulative error: 0");
                 }
                 // Look up a pre-recorded character.
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) ||
@@ -184,6 +211,9 @@ int main()
             
             // Draw the current best word.
             window.draw(asl_sentence);
+            
+            window.draw(current_levhenstein_distance);
+            window.draw(cumulative_levhenstein_distance);
             
             // Draw the replay character.
             if(replay_character.getString() != "")
