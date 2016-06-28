@@ -59,7 +59,7 @@ void Analyzer::on_gesture(multimap<double, string> const& matches)
                 lm::ngram::State out_state;
                 auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
                 
-                sentences_.emplace(combined_score{0, score, i + 1.}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
+                sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
             }
         }
     }
