@@ -11,5 +11,5 @@ if(NOT MSVC)
 endif()
 
 add_subdirectory(lib)
-add_subdirectory(recorder)
+add_subdirectory(lexicographer)
 add_subdirectory(transcriber)

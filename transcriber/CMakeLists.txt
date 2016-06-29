@@ -2,7 +2,7 @@ find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
 
 add_executable(transcriber
-    gestures.sample
+    lexicon.sample
     levhenstein_distance.h
     main.cpp
 )
@@ -47,6 +47,6 @@ add_custom_command(TARGET transcriber POST_BUILD
 )
 
 add_custom_command(TARGET transcriber POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/gestures.sample" $<TARGET_FILE_DIR:transcriber>/gestures.sample
-    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/gestures.sample"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/lexicon.sample" $<TARGET_FILE_DIR:transcriber>/lexicon.sample
+    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/lexicon.sample"
 )

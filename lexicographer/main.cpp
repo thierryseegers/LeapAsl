@@ -43,10 +43,10 @@ int main()
     
     LeapAsl::Database database;
     {
-        ifstream gestures_data_istream("gestures", ios::binary);
-        if(gestures_data_istream)
+        ifstream lexicon_data_istream("lexicon", ios::binary);
+        if(lexicon_data_istream)
         {
-            gestures_data_istream >> database;
+            lexicon_data_istream >> database;
         }
     }
     
@@ -60,7 +60,7 @@ int main()
     contextSettings.antialiasingLevel = 4;
 
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Recorder", sf::Style::Default, contextSettings);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapAsl Lexicographer", sf::Style::Default, contextSettings);
     window.setVerticalSyncEnabled(true);
 
     // Make the window the active target for OpenGL calls
@@ -211,17 +211,17 @@ int main()
     {
         string const temp_filename = tmpnam(nullptr);
         
-        ofstream gestures_data_ostream(temp_filename.c_str(), ios::binary);
-        if(gestures_data_ostream)
+        ofstream lexicon_data_ostream(temp_filename.c_str(), ios::binary);
+        if(lexicon_data_ostream)
         {
-            gestures_data_ostream << database;
+            lexicon_data_ostream << database;
         }
         
-        rename(temp_filename.c_str(), "gestures");
+        rename(temp_filename.c_str(), "lexicon");
     }
     catch(exception const& e)
     {
-        cout << "Failed to write gestures to disk" << endl << e.what() << endl;
+        cout << "Failed to write lexicon to disk" << endl << e.what() << endl;
     }
 
     return 0;

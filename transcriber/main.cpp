@@ -82,17 +82,17 @@ int main()
 
     LeapAsl::Database database;
     {
-        ifstream gestures_data_istream("gestures", ios::binary);
-        if(!gestures_data_istream)
+        ifstream lexicon_data_istream("lexicon", ios::binary);
+        if(!lexicon_data_istream)
         {
-            gestures_data_istream.open("gestures.sample", ios::binary);
-            if(!gestures_data_istream)
+            lexicon_data_istream.open("lexicon.sample", ios::binary);
+            if(!lexicon_data_istream)
             {
                 return EXIT_FAILURE;
             }
         }
         
-        gestures_data_istream >> database;
+        lexicon_data_istream >> database;
     }
     
     Leap::Controller controller;
@@ -107,7 +107,7 @@ int main()
     contextSettings.antialiasingLevel = 4;
 
     // Create the main window
-    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapLearnedGestures Transcriber", sf::Style::Default, contextSettings);
+    sf::RenderWindow window(sf::VideoMode(800, 600), "LeapAsl Transcriber", sf::Style::Default, contextSettings);
     window.setVerticalSyncEnabled(true);
 
     // Make the window the active target for OpenGL calls
