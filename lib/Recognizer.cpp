@@ -1,6 +1,6 @@
 #include "LeapAsl/Recognizer.h"
 
-#include "LeapAsl/Database.h"
+#include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -15,8 +15,8 @@ namespace LeapAsl
 
 using namespace std;
     
-Recognizer::Recognizer(Leap::Controller& controller, Database const& database, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
-    : database_(database)
+Recognizer::Recognizer(Leap::Controller& controller, Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+    : Lexicon_(Lexicon)
     , on_gesture_(on_gesture)
     , hold_duration_(hold_duration)
     , down_duration_(down_duration)
@@ -77,7 +77,7 @@ void Recognizer::onFrame(Leap::Controller const& controller)
     
     // Analyze the one hand present.
 
-    auto const scores = database_.compare(hand);
+    auto const scores = Lexicon_.compare(hand);
     for(auto const& score : scores)
     {
         scores_[score.second] += score.first;

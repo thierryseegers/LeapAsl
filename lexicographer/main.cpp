@@ -1,4 +1,4 @@
-#include "LeapAsl/Database.h"
+#include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
@@ -41,12 +41,12 @@ int main()
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    LeapAsl::Database database;
+    LeapAsl::Lexicon Lexicon;
     {
         ifstream lexicon_data_istream("lexicon", ios::binary);
         if(lexicon_data_istream)
         {
-            lexicon_data_istream >> database;
+            lexicon_data_istream >> Lexicon;
         }
     }
     
@@ -121,17 +121,17 @@ int main()
                         if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = database.hand(replay_character.getString());
+                            replay_hand = Lexicon.hand(replay_character.getString());
                         }
                         else if(event.key.code == sf::Keyboard::Space)
                         {
                             replay_character.setString("_");
-                            replay_hand = database.hand(" ");
+                            replay_hand = Lexicon.hand(" ");
                         }
                         else if(event.key.code == sf::Keyboard::Period)
                         {
                             replay_character.setString(".");
-                            replay_hand = database.hand(replay_character.getString());
+                            replay_hand = Lexicon.hand(replay_character.getString());
                         }
    
                     }
@@ -146,15 +146,15 @@ int main()
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        database.capture(string(1, event.key.code + 'a'), controller.frame());
+                        Lexicon.capture(string(1, event.key.code + 'a'), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        database.capture(" ", controller.frame());
+                        Lexicon.capture(" ", controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        database.capture(".", controller.frame());
+                        Lexicon.capture(".", controller.frame());
                     }
                 }
             }
@@ -206,7 +206,7 @@ int main()
         window.display();
     }
     
-    // Save the database to file.
+    // Save the Lexicon to file.
     try
     {
         string const temp_filename = tmpnam(nullptr);
@@ -214,7 +214,7 @@ int main()
         ofstream lexicon_data_ostream(temp_filename.c_str(), ios::binary);
         if(lexicon_data_ostream)
         {
-            lexicon_data_ostream << database;
+            lexicon_data_ostream << Lexicon;
         }
         
         rename(temp_filename.c_str(), "lexicon");

@@ -1,4 +1,4 @@
-#include "LeapAsl/Database.h"
+#include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
 
@@ -11,14 +11,14 @@ namespace LeapAsl
 
 using namespace std;
 
-void Database::capture(string const& name, Leap::Frame const& frame)
+void Lexicon::capture(string const& name, Leap::Frame const& frame)
 {
     added_gestures_.push_back(name);
     
     gestures_[name] = make_pair(frame, to_position(frame.hands()[0]));
 }
 
-string Database::match(Leap::Hand const& hand) const
+string Lexicon::match(Leap::Hand const& hand) const
 {
     auto const positions = to_position(hand);
     
@@ -37,7 +37,7 @@ string Database::match(Leap::Hand const& hand) const
     return name;
 }
 
-multimap<double, string> Database::compare(Leap::Hand const& hand) const
+multimap<double, string> Lexicon::compare(Leap::Hand const& hand) const
 {
     multimap<double, string> scores;
     
@@ -51,12 +51,12 @@ multimap<double, string> Database::compare(Leap::Hand const& hand) const
     return scores;
 }
 
-Leap::Hand Database::hand(string const& name) const
+Leap::Hand Lexicon::hand(string const& name) const
 {
     return gestures_.at(name).first.hands()[0];
 }
 
-ostream& operator<<(ostream& o, Database const& t)
+ostream& operator<<(ostream& o, Lexicon const& t)
 {
     o << t.serialized_data_;
     
@@ -84,7 +84,7 @@ ostream& operator<<(ostream& o, Database const& t)
     return o;
 }
 
-istream& operator>>(istream& i, Database& t)
+istream& operator>>(istream& i, Lexicon& t)
 {
     Leap::Controller controller;
     

@@ -51,6 +51,8 @@ int main()
     cumulative_levhenstein_distance.setColor(sf::Color(255, 255, 255, 170));
     cumulative_levhenstein_distance.setPosition(400.f, 480.f);
 
+    ofstream capture("capture");
+    
     string last_top_sentence;
     size_t cumulative_distance = 0;
     auto const on_gesture = [&](vector<pair<double, string>> const& top_matches, string const& top_sentence)
@@ -80,7 +82,7 @@ int main()
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
-    LeapAsl::Database database;
+    LeapAsl::Lexicon Lexicon;
     {
         ifstream lexicon_data_istream("lexicon", ios::binary);
         if(!lexicon_data_istream)
@@ -92,11 +94,11 @@ int main()
             }
         }
         
-        lexicon_data_istream >> database;
+        lexicon_data_istream >> Lexicon;
     }
     
     Leap::Controller controller;
-    LeapAsl::Recognizer recognizer(controller, database, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer recognizer(controller, Lexicon, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
 
     Leap::Hand replay_hand;
 
@@ -169,6 +171,8 @@ int main()
                     cumulative_distance = 0;
                     current_levhenstein_distance.setString("Error: 0");
                     cumulative_levhenstein_distance.setString("Cumulative error: 0");
+                    
+                    capture.open("capture", ios_base::trunc);
                 }
                 // Look up a pre-recorded character.
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) ||
@@ -179,17 +183,17 @@ int main()
                         if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = database.hand(replay_character.getString());
+                            replay_hand = Lexicon.hand(replay_character.getString());
                         }
                         else if(event.key.code == sf::Keyboard::Space)
                         {
                             replay_character.setString("_");
-                            replay_hand = database.hand(" ");
+                            replay_hand = Lexicon.hand(" ");
                         }
                         else if(event.key.code == sf::Keyboard::Period)
                         {
                             replay_character.setString(".");
-                            replay_hand = database.hand(replay_character.getString());
+                            replay_hand = Lexicon.hand(replay_character.getString());
                         }
                         
                     }

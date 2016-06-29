@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LeapAsl/Database.h"
+#include "LeapAsl/Lexicon.h"
 #include "LeapAsl/Utility.h"
 
 #include <LeapSDK/Leap.h>
@@ -21,12 +21,12 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
     
-    Recognizer(Leap::Controller& controller, Database const& database, on_gesture_f&& on_gesture, duration const& hold_duration = std::chrono::milliseconds(1000), duration const& down_duration = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100));
+    Recognizer(Leap::Controller& controller, Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration = std::chrono::milliseconds(1000), duration const& down_duration = std::chrono::milliseconds(1000), duration const& sample_rate = std::chrono::milliseconds(100));
     
 private:
     virtual void onFrame(Leap::Controller const& controller) override;
     
-    Database const& database_;
+    Lexicon const& Lexicon_;
     
     on_gesture_f const on_gesture_;
     
