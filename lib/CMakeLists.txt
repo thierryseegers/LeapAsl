@@ -9,10 +9,12 @@ add_library(LeapAsl
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/LeapAsl.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Lexicon.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Recognizer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Recorder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Utility.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Analyzer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lexicon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Recorder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp
     ${Leap_INCLUDE_DIR}/LeapSDK/util/LeapUtilGL.cpp
 )

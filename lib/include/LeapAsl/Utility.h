@@ -5,6 +5,7 @@
 #include <LeapSDK/util/LeapUtilGL.h>
 
 #include <array>
+#include <iosfwd>
 #include <limits>
 #include <vector>
 
@@ -36,4 +37,11 @@ Leap::Matrix normalized_hand_transform(Leap::Hand const& hand);
 //! Lifted from sample code, augmented with a transform to apply to the hand.
 void draw_skeleton_hand(Leap::Hand const& hand, Leap::Matrix const& transformation = Leap::Matrix::identity(), LeapUtilGL::GLVector4fv const& bone_color = LeapUtilGL::GLVector4fv::One(), LeapUtilGL::GLVector4fv const& joint_color = LeapUtilGL::GLVector4fv::One());
 
+}
+
+namespace std
+{
+    
+std::ostream& operator<<(std::ostream& o, LeapAsl::fingers_position const& positions);
+    
 }

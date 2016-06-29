@@ -68,13 +68,7 @@ ostream& operator<<(ostream& o, Lexicon const& t)
         o << name << '\n';
         
         // Write the spatial positions of the joints.
-        for(auto const& finger : gesture.second)
-        {
-            for(auto const& joint : finger)
-            {
-                o << joint.x << '\n' << joint.y << '\n' << joint.z << '\n';
-            }
-        }
+        o << gesture.second;
         
         // Write the serialized frame data.
         auto const serialized_frame = gesture.first.serialize();

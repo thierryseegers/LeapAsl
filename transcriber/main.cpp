@@ -51,8 +51,6 @@ int main()
     cumulative_levhenstein_distance.setColor(sf::Color(255, 255, 255, 170));
     cumulative_levhenstein_distance.setPosition(400.f, 480.f);
 
-    ofstream capture("capture");
-    
     string last_top_sentence;
     size_t cumulative_distance = 0;
     auto const on_gesture = [&](vector<pair<double, string>> const& top_matches, string const& top_sentence)
@@ -97,9 +95,12 @@ int main()
         lexicon_data_istream >> Lexicon;
     }
     
-    Leap::Controller controller;
+    ofstream record_stream("capture");
+    LeapAsl::Recorder recorder(record_stream);
+    Leap::Controller controller(recorder);
+    
     LeapAsl::Recognizer recognizer(controller, Lexicon, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
-
+    
     Leap::Hand replay_hand;
 
     // Request a 32-bits depth buffer when creating the window
@@ -172,7 +173,7 @@ int main()
                     current_levhenstein_distance.setString("Error: 0");
                     cumulative_levhenstein_distance.setString("Cumulative error: 0");
                     
-                    capture.open("capture", ios_base::trunc);
+                    record_stream.open("capture", ios_base::trunc);
                 }
                 // Look up a pre-recorded character.
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) ||

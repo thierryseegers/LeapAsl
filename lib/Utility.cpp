@@ -4,6 +4,8 @@
 #include <LeapSDK/LeapMath.h>
 #include <LeapSDK/util/LeapUtilGL.h>
 
+#include <iostream>
+
 namespace LeapAsl
 {
 
@@ -146,6 +148,24 @@ void draw_skeleton_hand(Leap::Hand const& hand, Leap::Matrix const& transformati
     // draw palm position
     glColor4fv(joint_color);
     drawSphere(LeapUtilGL::kStyle_Solid, transformation.transformPoint(palm), palm_radius_scale * radius);
+}
+
+}
+
+namespace std
+{
+    
+std::ostream& operator<<(std::ostream& o, LeapAsl::fingers_position const& positions)
+{
+    for(auto const& finger : positions)
+    {
+        for(auto const& joint : finger)
+        {
+            o << joint.x << '\n' << joint.y << '\n' << joint.z << '\n';
+        }
+    }
+    
+    return o;
 }
 
 }
