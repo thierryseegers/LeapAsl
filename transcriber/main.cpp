@@ -80,7 +80,7 @@ int main()
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
-    LeapAsl::Lexicon Lexicon;
+    LeapAsl::Lexicon lexicon;
     {
         ifstream lexicon_data_istream("lexicon", ios::binary);
         if(!lexicon_data_istream)
@@ -92,14 +92,14 @@ int main()
             }
         }
         
-        lexicon_data_istream >> Lexicon;
+        lexicon_data_istream >> lexicon;
     }
     
     ofstream record_stream("capture");
     LeapAsl::Recorder recorder(record_stream);
     Leap::Controller controller(recorder);
     
-    LeapAsl::Recognizer recognizer(controller, Lexicon, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer recognizer(controller, lexicon, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
     
     Leap::Hand replay_hand;
 
@@ -184,17 +184,17 @@ int main()
                         if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = Lexicon.hand(replay_character.getString());
+                            replay_hand = lexicon.hand(replay_character.getString());
                         }
                         else if(event.key.code == sf::Keyboard::Space)
                         {
                             replay_character.setString("_");
-                            replay_hand = Lexicon.hand(" ");
+                            replay_hand = lexicon.hand(" ");
                         }
                         else if(event.key.code == sf::Keyboard::Period)
                         {
                             replay_character.setString(".");
-                            replay_hand = Lexicon.hand(replay_character.getString());
+                            replay_hand = lexicon.hand(replay_character.getString());
                         }
                         
                     }
