@@ -15,16 +15,14 @@ namespace LeapAsl
 
 using namespace std;
     
-Recognizer::Recognizer(Leap::Controller& controller, Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+Recognizer::Recognizer(Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
     : Lexicon_(Lexicon)
     , on_gesture_(on_gesture)
     , hold_duration_(hold_duration)
     , down_duration_(down_duration)
     , sample_rate_(sample_rate)
     , next_sample_(chrono::high_resolution_clock::now())
-{
-    controller.addListener(*this);
-}
+{}
 
 void Recognizer::onFrame(Leap::Controller const& controller)
 {

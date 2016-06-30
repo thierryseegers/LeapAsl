@@ -23,7 +23,7 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
     
-    Recognizer(Leap::Controller& controller, Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration = 1s, duration const& down_duration = 1s, duration const& sample_rate = 100ms);
+    Recognizer(Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration = 1s, duration const& down_duration = 1s, duration const& sample_rate = 100ms);
     
 private:
     virtual void onFrame(Leap::Controller const& controller) override;
