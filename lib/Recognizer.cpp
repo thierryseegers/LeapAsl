@@ -18,7 +18,7 @@ namespace LeapAsl
 
 using namespace std;
     
-Recognizer::Recognizer(Leap::Controller const& controller, Lexicon const& lexicon, on_gesture_f&& on_gesture, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
+Recognizer::Recognizer(Leap::Controller const& controller, Lexicon const& lexicon, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& down_duration, duration const& sample_rate)
     : poll_(true)
 {
     poller_ = thread([=, &controller, &lexicon]()
@@ -88,7 +88,7 @@ Recognizer::Recognizer(Leap::Controller const& controller, Lexicon const& lexico
                                  {
                                      matches.emplace(score.second / 1000, score.first);
                                  }
-                                 on_gesture(matches);
+                                 on_recognition(matches);
                                  
                                  anchor = fingers_position();
                                  scores.clear();
