@@ -6,9 +6,12 @@
 #include <LeapSDK/Leap.h>
 
 #include <chrono>
+#include <condition_variable>
 #include <functional>
 #include <map>
+#include <mutex>
 #include <string>
+#include <thread>
 
 namespace LeapAsl
 {
@@ -23,20 +26,15 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
     
-    Recognizer(Leap::Controller& controller, Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration = 1s, duration const& down_duration = 1s, duration const& sample_rate = 100ms);
+    Recognizer(Leap::Controller const& controller, Lexicon const& Lexicon, on_gesture_f&& on_gesture, duration const& hold_duration = 1s, duration const& down_duration = 1s, duration const& sample_rate = 100ms);
+    
+    ~Recognizer();
     
 private:
-    virtual void onFrame(Leap::Controller const& controller) override;
-    
-    Lexicon const& Lexicon_;
-    
-    on_gesture_f const on_gesture_;
-    
-    duration const hold_duration_, down_duration_, sample_rate_;
-    time_point anchor_sample_, next_sample_;
-    
-    fingers_position anchor_;
-    std::map<std::string, double> scores_;
+    std::thread poller_;
+    bool poll_;
+    std::mutex m_;
+    std::condition_variable cv_;
 };
     
 }
