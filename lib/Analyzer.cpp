@@ -54,7 +54,7 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
     {
         for(int i : indices)
         {
-            if(top_matches[i].second != " ") // Skip whitespace at the begininng of a sentence.
+            if(top_matches[i].second != " " && top_matches[i].second != ".") // Skip space and punctuation at the begininng of a sentence.
             {
                 lm::ngram::State out_state;
                 auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
