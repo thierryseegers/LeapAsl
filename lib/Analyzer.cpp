@@ -144,13 +144,13 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
     {
         top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
     }
-    
+    /*
     for(auto const sentence : sentences_)
     {
         cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
         << "}, \"" << sentence.second.first << "\"]" << endl;
     }
-    
+    */
     on_gesture_(top_matches, top_sentence.second.first);
 }
 
