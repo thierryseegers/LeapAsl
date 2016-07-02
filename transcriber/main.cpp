@@ -98,11 +98,10 @@ int main()
     ofstream record_stream("capture");
     LeapAsl::Recorder recorder(record_stream);
     
-    LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
-    
     Leap::Controller controller;
     controller.addListener(recorder);
-    controller.addListener(recognizer);
+    
+    LeapAsl::Recognizer recognizer(controller, lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     
     Leap::Hand replay_hand;
 
