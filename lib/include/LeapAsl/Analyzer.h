@@ -133,7 +133,7 @@ public:
     
     void reset();
     
-    void on_gesture(std::multimap<double, std::string> const& matches);
+    void on_recognition(std::multimap<double, std::string> const& matches);
     
 private:
     static std::string const dropped_symbol;

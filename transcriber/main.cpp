@@ -99,7 +99,7 @@ int main()
     LeapAsl::Recorder recorder(record_stream);
     Leap::Controller controller(recorder);
     
-    LeapAsl::Recognizer recognizer(controller, Lexicon, bind(&LeapAsl::Analyzer::on_gesture, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer recognizer(controller, Lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     
     Leap::Hand replay_hand;
 
