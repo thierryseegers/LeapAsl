@@ -10,6 +10,7 @@ if(NOT MSVC)
     list(APPEND CMAKE_CXX_FLAGS "-stdlib=libc++")
 endif()
 
+add_subdirectory(analyzer)
 add_subdirectory(lib)
 add_subdirectory(lexicographer)
 add_subdirectory(transcriber)
