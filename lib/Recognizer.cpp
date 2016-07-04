@@ -18,7 +18,7 @@ namespace LeapAsl
 
 using namespace std;
     
-    Recognizer::duration analyze(Leap::Frame const& frame, Recognizer::time_point const& now, Lexicon const& lexicon, Recognizer::on_recognition_f const& on_recognition, Recognizer::duration const& sample_rate, Recognizer::duration const& hold_duration, Recognizer::duration const& down_duration)
+Recognizer::duration analyze(Leap::Frame const& frame, Recognizer::time_point const& now, Lexicon const& lexicon, Recognizer::on_recognition_f const& on_recognition, Recognizer::duration const& sample_rate, Recognizer::duration const& hold_duration, Recognizer::duration const& down_duration)
 {
     static fingers_position anchor;
     static map<string, double> scores;
@@ -109,12 +109,13 @@ Recognizer::Recognizer(RecordPlayer const& player, Lexicon const& lexicon, on_re
 {
     reader_ = thread([=, &player, &lexicon]()
                      {
-                         int64_t last_timestamp = player.frame().timestamp();
+                         auto const first_frame = player.frame();
+                         int64_t last_timestamp = first_frame.timestamp();
 
                          duration wait_time = sample_rate, elapsed_time;
                          time_point now{chrono::microseconds(last_timestamp)};
 
-                         for(auto frame = player.frame(); read_ && frame.isValid(); frame = player.frame())
+                         for(auto frame = first_frame; read_ && frame.isValid(); frame = player.frame())
                          {
                              auto const frame_duration = chrono::microseconds(frame.timestamp() - last_timestamp);
                              last_timestamp = frame.timestamp();
