@@ -150,7 +150,7 @@ private:
         
         bool operator<(combined_score const& other) const
         {
-            return (std::abs(complete_words) + std::abs(incomplete_word) + gesture / 100) < (std::abs(other.complete_words) + std::abs(other.incomplete_word) + other.gesture / 100);
+            return (std::abs(complete_words) + std::abs(incomplete_word) + gesture) < (std::abs(other.complete_words) + std::abs(other.incomplete_word) + other.gesture);
         }
     };
     
