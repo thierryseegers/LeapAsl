@@ -18,19 +18,43 @@ namespace LeapAsl
 
 using namespace std;
     
-Recognizer::duration analyze(Leap::Frame const& frame, Recognizer::time_point const& now, Lexicon const& lexicon, Recognizer::on_recognition_f const& on_recognition, Recognizer::duration const& sample_rate, Recognizer::duration const& hold_duration, Recognizer::duration const& down_duration)
-{
-    static fingers_position anchor;
-    static map<string, double> scores;
-    static Recognizer::time_point anchor_sample;
+Recognizer::Recognizer(Lexicon const& lexicon, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
+    : lexicon_(lexicon)
+    , on_recognition_(on_recognition)
+    , hold_duration_(hold_duration)
+    , rest_duration_(rest_duration)
+    , next_sample_()
+{}
 
+Recognizer::~Recognizer()
+{}
+
+void Recognizer::onFrame(Leap::Controller const& controller)
+{
+   analyze(controller.frame(), chrono::high_resolution_clock::now());
+}
+
+void Recognizer::on_frame(RecordPlayer const& record_player)
+{
+    auto const frame = record_player.frame();
+    analyze(frame, time_point{chrono::microseconds(frame.timestamp())});
+}
+
+void Recognizer::analyze(Leap::Frame const& frame, time_point const& now)
+{    
+    // If we are not scheduled to take a sample yet, return immediately.
+    if(now < next_sample_)
+    {
+        return;
+    }
+    
     // Reject and reset if there is more than one hand in the frame. (A (temporary?) restriction.)
     if(frame.hands().count() != 1)
     {
-        anchor = fingers_position();
-        scores.clear();
+        anchor_ = fingers_position();
+        scores_.clear();
         
-        return sample_rate;
+        return;
     }
     
     auto const& hand = frame.hands()[0];
@@ -38,108 +62,55 @@ Recognizer::duration analyze(Leap::Frame const& frame, Recognizer::time_point co
     // Reject and reset if low-confidence.
     if(hand.confidence() < 0.2)
     {
-        anchor = fingers_position();
-        scores.clear();
+        anchor_ = fingers_position();
+        scores_.clear();
         
-        return sample_rate;
+        return;
     }
     
     // If we have no anchor, the current position becomes the anchor by which we will compare future positions.
     // Else if the current position differs too much from the anchor, it becomes the new anchor.
-    if(anchor == fingers_position())
+    if(anchor_ == fingers_position())
     {
-        anchor = to_position(hand);
-        anchor_sample = now;
+        anchor_ = to_position(hand);
+        anchor_sample_ = now;
     }
-    else if(difference(anchor, to_position(hand)) > 1000)
+    else if(difference(anchor_, to_position(hand)) > 1000)
     {
-        anchor = to_position(hand);
-        anchor_sample = now;
+        anchor_ = to_position(hand);
+        anchor_sample_ = now;
         
-        scores.clear();
+        scores_.clear();
     }
     
     // Analyze the one hand present.
     
-    for(auto const& score : lexicon.compare(hand))
+    for(auto const& score : lexicon_.compare(hand))
     {
-        scores[score.second] += score.first;
+        scores_[score.second] += score.first;
     }
     
-    // If we have past our \ref hold_duration, report what we have, reset the information and schedule the next sample analysis for \ref down_duration later.
-    // Else, just set the next sample analysis for \ref sample_rate later.
-    if(now - anchor_sample >= hold_duration)
+    // If we have past our \ref hold_duration, report what we have, reset the information and schedule the next sample analysis for \ref rest_duration_ later.
+    // Else, just set the next sample analysis for as soon as possible.
+    if(now - anchor_sample_ >= hold_duration_)
     {
         // Order gesture names by their scores.
         multimap<double, string> matches;
-        for(auto const& score : scores)
+        for(auto const& score : scores_)
         {
             matches.emplace(score.second / 1000, score.first);
         }
-        on_recognition(matches);
+        on_recognition_(matches);
         
-        anchor = fingers_position();
-        scores.clear();
+        anchor_ = fingers_position();
+        scores_.clear();
         
-        return down_duration;
+        next_sample_ = now + rest_duration_;
     }
     else
     {
-        return sample_rate;
+        next_sample_ = now;
     }
 }
-
-Recognizer::Recognizer(Leap::Controller const& controller, Lexicon const& lexicon, on_recognition_f&& on_recognition, duration const& sample_rate, duration const& hold_duration, duration const& down_duration)
-    : read_(true)
-{
-    reader_ = thread([=, &controller, &lexicon]()
-                     {
-                         duration wait_time = sample_rate;
-                         
-                         unique_lock<mutex> l(m_);
-                         while(!cv_.wait_for(l, wait_time, [=, &controller, &lexicon]{ return !read_; }))
-                         {
-                             wait_time = analyze(controller.frame(), chrono::high_resolution_clock::now(), lexicon, on_recognition, sample_rate, hold_duration, down_duration);
-                         }
-                     });
-}
-
-Recognizer::Recognizer(RecordPlayer const& player, Lexicon const& lexicon, on_recognition_f&& on_recognition, duration const& sample_rate, duration const& hold_duration, duration const& down_duration)
-    : read_(true)
-{
-    reader_ = thread([=, &player, &lexicon]()
-                     {
-                         auto const first_frame = player.frame();
-                         int64_t last_timestamp = first_frame.timestamp();
-
-                         duration wait_time = sample_rate, elapsed_time;
-                         time_point now{chrono::microseconds(last_timestamp)};
-
-                         for(auto frame = first_frame; read_ && frame.isValid(); frame = player.frame())
-                         {
-                             auto const frame_duration = chrono::microseconds(frame.timestamp() - last_timestamp);
-                             last_timestamp = frame.timestamp();
-
-                             elapsed_time += frame_duration;
-                             now += frame_duration;
-                             
-                             if(elapsed_time >= wait_time)
-                             {
-                                 wait_time = analyze(frame, now, lexicon, on_recognition, sample_rate, hold_duration, down_duration);
-                                 elapsed_time = duration::zero();
-                             }
-                         }
-                     });
-}
-
-Recognizer::~Recognizer()
-{
-    {
-        lock_guard<mutex> l(m_);
-        read_ = false;
-        cv_.notify_one();
-    }
-    reader_.join();
-}
-
+    
 }

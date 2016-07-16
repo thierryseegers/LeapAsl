@@ -37,16 +37,14 @@ int main()
         lexicon_data_istream >> lexicon;
     }
     
-    mutex m;
-    condition_variable cv;
-    
     ifstream capture_stream("capture");
-    LeapAsl::RecordPlayer record_player(capture_stream, [&]{ lock_guard<mutex> l(m); cv.notify_one(); });
+    LeapAsl::RecordPlayer record_player(capture_stream);
     
-    LeapAsl::Recognizer recognizer(record_player, lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1), 85ms, 1s, 1s);
-
-    unique_lock<mutex> l(m);
-    cv.wait(l);
+    LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1), 1s, 1s);
+    record_player.add_listener(recognizer);
+    
+    record_player.start();
+    record_player.wait();
     
     cout << last_top_sentence << '\n' << cumulative_distance << '\n';
     

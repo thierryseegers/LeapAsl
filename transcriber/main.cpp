@@ -101,7 +101,8 @@ int main()
     Leap::Controller controller;
     controller.addListener(recorder);
     
-    LeapAsl::Recognizer recognizer(controller, lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+    controller.addListener(recognizer);
     
     Leap::Hand replay_hand;
 
