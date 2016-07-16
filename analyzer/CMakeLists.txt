@@ -1,7 +1,6 @@
 find_package(Leap REQUIRED)
 
 add_executable(analyzer
-    lexicon.sample
     levhenstein_distance.h
     main.cpp
 )
@@ -39,11 +38,8 @@ if(APPLE)
 endif()
 
 add_custom_command(TARGET analyzer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/aspell_en_expanded" $<TARGET_FILE_DIR:analyzer>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/romeo_and_juliet_corpus.mmap" $<TARGET_FILE_DIR:analyzer>
-)
-
-add_custom_command(TARGET analyzer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/lexicon.sample" $<TARGET_FILE_DIR:analyzer>/lexicon.sample
-    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/lexicon.sample"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/aspell_en_expanded" $<TARGET_FILE_DIR:analyzer>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/lexicon.sample" $<TARGET_FILE_DIR:analyzer>
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/romeo_and_juliet_corpus.mmap" $<TARGET_FILE_DIR:analyzer>
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/../data/captures" $<TARGET_FILE_DIR:analyzer>/captures
 )
