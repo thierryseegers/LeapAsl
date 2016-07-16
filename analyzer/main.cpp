@@ -17,7 +17,6 @@ int main()
     {
         cumulative_distance += levenshtein_distance(last_top_sentence, top_sentence);
         last_top_sentence = top_sentence;
-        //cout << last_top_sentence << '\n';
     };
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
@@ -37,8 +36,7 @@ int main()
         lexicon_data_istream >> lexicon;
     }
     
-    ifstream capture_stream("capture");
-    LeapAsl::RecordPlayer record_player(capture_stream);
+    LeapAsl::RecordPlayer record_player(cin);
     
     LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1), 1s, 1s);
     record_player.add_listener(recognizer);
