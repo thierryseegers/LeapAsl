@@ -41,8 +41,7 @@ int main()
     LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1), 1s, 1s);
     record_player.add_listener(recognizer);
     
-    record_player.start();
-    record_player.wait();
+    record_player.read();
     
     cout << last_top_sentence << '\n' << cumulative_distance << '\n';
     
