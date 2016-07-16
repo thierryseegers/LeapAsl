@@ -4,6 +4,7 @@
 #include "LeapAsl/Lexicon.h"
 #include "LeapAsl/Recognizer.h"
 #include "LeapAsl/Recorder.h"
+#include "LeapAsl/RecordPlayer.h"
 #include "LeapAsl/Utility.h"
 
 namespace LeapLearnedGestures

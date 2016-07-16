@@ -36,15 +36,17 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
     
     vector<pair<double, string>> top_matches;
     copy_n(matches.begin(), n_top_matches, back_inserter(top_matches));
-    
+
+    // Normalize the scores of the top matches where the worse one is 5.0. (Somewhat in line with language model score.)
+    double const normalization_factor = 5. / top_matches.back().first;
+    transform(top_matches.begin(), top_matches.end(), top_matches.begin(), [&](auto& p){ p.first *= normalization_factor; return p; });
+
     vector<size_t> indices(n_top_matches);
     iota(indices.begin(), indices.end(), 0);
     
     // Clear progress.
     if(reset_.exchange(false))
     {
-        cout << "reset\n";
-        
         dropped_char_indices_.clear();
         sentences_.clear();
     }
@@ -54,7 +56,7 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
     {
         for(int i : indices)
         {
-            if(top_matches[i].second != " ") // Skip whitespace at the begininng of a sentence.
+            if(top_matches[i].second != " " && top_matches[i].second != ".") // Skip space and punctuation at the begininng of a sentence.
             {
                 lm::ngram::State out_state;
                 auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
@@ -144,13 +146,7 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
     {
         top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
     }
-    
-    for(auto const sentence : sentences_)
-    {
-        cout << "[{" << sentence.first.complete_words << ", " << sentence.first.incomplete_word << ", " << sentence.first.gesture
-        << "}, \"" << sentence.second.first << "\"]" << endl;
-    }
-    
+
     on_gesture_(top_matches, top_sentence.second.first);
 }
 
