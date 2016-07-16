@@ -3,7 +3,6 @@
 #include <LeapSDK/Leap.h>
 
 #include <algorithm>
-#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>

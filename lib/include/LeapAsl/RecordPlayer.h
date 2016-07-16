@@ -2,7 +2,6 @@
 
 #include <LeapSDK/Leap.h>
 
-#include <functional>
 #include <iosfwd>
 #include <utility>
 #include <vector>
@@ -37,7 +36,6 @@ public:
 
     // Returns the last frame reported.
     Leap::Frame frame() const;
-    
 };
 
 }
