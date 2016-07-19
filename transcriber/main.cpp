@@ -171,6 +171,9 @@ int main()
                 {
                     analyzer.reset();
                     
+                    asl_character.setString("");
+                    asl_sentence.setString("");
+                    
                     last_top_sentence.clear();
                     cumulative_distance = 0;
                     current_levhenstein_distance.setString("Error: 0");
