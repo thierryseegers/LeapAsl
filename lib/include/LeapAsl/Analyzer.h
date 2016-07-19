@@ -118,6 +118,12 @@ public:
         return invalid;
     }
     
+    template<typename R>
+    validity validate(R const& r) const
+    {
+        return validate(std::begin(r), std::end(r));
+    }
+    
 private:
     std::map<T, trie<T>> children_;
 };
