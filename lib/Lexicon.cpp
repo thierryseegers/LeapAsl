@@ -68,7 +68,7 @@ vector<char> Lexicon::names() const
     vector<char> n;
     
     transform(gestures_.begin(), gestures_.end(), back_inserter(n), [](auto const& p){ return p.first; });
-    n.erase(unique(n.begin(), n.end()));
+    n.erase(unique(n.begin(), n.end()), n.end());
     
     return n;
 }
