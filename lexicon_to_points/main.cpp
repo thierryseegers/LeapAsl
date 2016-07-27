@@ -15,7 +15,7 @@ int main()
     {
         for(auto const& hand : lexicon.hands(name))
         {
-            cout << name;
+            cout << (int)name;
             
             for(auto const& finger : LeapAsl::to_position(hand))
             {
