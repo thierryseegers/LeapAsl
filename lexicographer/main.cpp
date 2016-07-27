@@ -121,17 +121,17 @@ int main()
                         if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = Lexicon.hand(replay_character.getString());
+                            replay_hand = Lexicon.hands(replay_character.getString())[0];
                         }
                         else if(event.key.code == sf::Keyboard::Space)
                         {
                             replay_character.setString("_");
-                            replay_hand = Lexicon.hand(" ");
+                            replay_hand = Lexicon.hands(" ")[0];
                         }
                         else if(event.key.code == sf::Keyboard::Period)
                         {
                             replay_character.setString(".");
-                            replay_hand = Lexicon.hand(replay_character.getString());
+                            replay_hand = Lexicon.hands(replay_character.getString())[0];
                         }
    
                     }
