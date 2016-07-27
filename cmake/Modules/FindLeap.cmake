@@ -73,10 +73,13 @@ else()
 
   find_library(Leap_LIBRARY_RELEASE
             NAMES libLeap.dylib
+		  libLeap.so 
             HINTS "${_libdir}")
   find_library(Leap_LIBRARY_DEBUG
             NAMES libLeapd.dylib
+		  libLeapd.so
                   libLeap.dylib #fallback on the release library
+		  libLeap.so
             HINTS "${_libdir}")
   set(Leap_BUILD_LIBRARIES optimized ${Leap_LIBRARY_RELEASE}
       debug ${Leap_LIBRARY_DEBUG} CACHE STRING "Leap libraries to build againsts.")
