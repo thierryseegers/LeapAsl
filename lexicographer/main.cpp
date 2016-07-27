@@ -41,12 +41,12 @@ int main()
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
     
-    LeapAsl::Lexicon Lexicon;
+    LeapAsl::Lexicon lexicon;
     {
         ifstream lexicon_data_istream("lexicon", ios::binary);
         if(lexicon_data_istream)
         {
-            lexicon_data_istream >> Lexicon;
+            lexicon_data_istream >> lexicon;
         }
     }
     
@@ -121,17 +121,17 @@ int main()
                         if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = Lexicon.hands(replay_character.getString())[0];
+                            replay_hand = lexicon.hands(replay_character.getString())[0];
                         }
                         else if(event.key.code == sf::Keyboard::Space)
                         {
                             replay_character.setString("_");
-                            replay_hand = Lexicon.hands(" ")[0];
+                            replay_hand = lexicon.hands(" ")[0];
                         }
                         else if(event.key.code == sf::Keyboard::Period)
                         {
                             replay_character.setString(".");
-                            replay_hand = Lexicon.hands(replay_character.getString())[0];
+                            replay_hand = lexicon.hands(replay_character.getString())[0];
                         }
    
                     }
@@ -146,15 +146,15 @@ int main()
                 {
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        Lexicon.capture(string(1, event.key.code + 'a'), controller.frame());
+                        lexicon.capture(string(1, event.key.code + 'a'), controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        Lexicon.capture(" ", controller.frame());
+                        lexicon.capture(" ", controller.frame());
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        Lexicon.capture(".", controller.frame());
+                        lexicon.capture(".", controller.frame());
                     }
                 }
             }
@@ -214,7 +214,7 @@ int main()
         ofstream lexicon_data_ostream(temp_filename.c_str(), ios::binary);
         if(lexicon_data_ostream)
         {
-            lexicon_data_ostream << Lexicon;
+            lexicon_data_ostream << lexicon;
         }
         
         rename(temp_filename.c_str(), "lexicon");
