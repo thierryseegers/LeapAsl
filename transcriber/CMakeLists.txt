@@ -32,13 +32,6 @@ target_link_libraries(transcriber
     PRIVATE ${SFML_LIBRARIES}
 )
 
-if(APPLE)
-    target_link_libraries(transcriber
-        PRIVATE "-framework GLUT"
-        PRIVATE "-framework OpenGL"
-    )
-endif()
-
 add_custom_command(TARGET transcriber POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/aspell_en_expanded" $<TARGET_FILE_DIR:transcriber>
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/lexicon.sample" $<TARGET_FILE_DIR:transcriber>

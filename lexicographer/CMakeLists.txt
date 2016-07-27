@@ -31,13 +31,6 @@ target_link_libraries(lexicographer
     PRIVATE ${SFML_LIBRARIES}
 )
 
-if(APPLE)
-    target_link_libraries(lexicographer
-        PRIVATE "-framework GLUT"
-        PRIVATE "-framework OpenGL"
-    )
-endif()
-
 add_custom_command(TARGET lexicographer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/resources" $<TARGET_FILE_DIR:lexicographer>/resources
 )

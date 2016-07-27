@@ -30,13 +30,6 @@ target_link_libraries(analyzer
     PRIVATE ${Leap_BUILD_LIBRARIES}
 )
 
-if(APPLE)
-    target_link_libraries(analyzer
-        PRIVATE "-framework GLUT"
-        PRIVATE "-framework OpenGL"
-    )
-endif()
-
 add_custom_command(TARGET analyzer POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/aspell_en_expanded" $<TARGET_FILE_DIR:analyzer>
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/../data/lexicon.sample" $<TARGET_FILE_DIR:analyzer>

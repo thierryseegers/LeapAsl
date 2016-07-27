@@ -1,7 +1,9 @@
 find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(BZip2 REQUIRED)
+find_package(GLUT REQUIRED)
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
+find_package(OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
 
 add_library(LeapAsl
@@ -47,7 +49,9 @@ target_include_directories(LeapAsl
 target_link_libraries(LeapAsl
     PRIVATE ${Boost_LIBRARIES}
     PRIVATE ${BZIP2_LIBRARIES}
+    PRIVATE ${GLUT_LIBRARY}
     PUBLIC ${KenLM_LIBRARIES}
     PUBLIC ${Leap_BUILD_LIBRARIES}
+    PRIVATE ${OPENGL_LIBRARIES}
     PRIVATE ${ZLIB_LIBRARIES}
 )
