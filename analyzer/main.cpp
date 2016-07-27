@@ -13,7 +13,7 @@ int main()
 {
     string last_top_sentence;
     size_t cumulative_distance = 0;
-    auto const on_gesture = [&](vector<pair<double, string>> const& top_matches, string const& top_sentence)
+    auto const on_gesture = [&](vector<pair<double, char>> const&, string const& top_sentence)
     {
         cumulative_distance += levenshtein_distance(last_top_sentence, top_sentence);
         last_top_sentence = top_sentence;

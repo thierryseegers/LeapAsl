@@ -133,13 +133,13 @@ private:
 class Analyzer
 {
 public:
-    using on_gesture_f = std::function<void (std::vector<std::pair<double, std::string>> const&, std::string const&)>;
+    using on_gesture_f = std::function<void (std::vector<std::pair<double, char>> const&, std::string const&)>;
     
     Analyzer(std::string const& dictionary_path, std::string const& language_model_path, on_gesture_f&& on_gesture);
     
     void reset();
     
-    void on_recognition(std::multimap<double, std::string> const& matches);
+    void on_recognition(std::multimap<double, char> const& matches);
     
 private:
     static std::string const dropped_symbol;

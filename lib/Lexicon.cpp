@@ -14,22 +14,22 @@ namespace LeapAsl
 
 using namespace std;
 
-void Lexicon::capture(string const& name, Leap::Frame const& frame)
+void Lexicon::capture(char const name, Leap::Frame const& frame)
 {
     auto const serialized = frame.serialize();
-    serialized_data_ += name + '\n' + to_string(serialized.length()) + '\n' + serialized + '\n';
+    serialized_data_ += string(1, name) + '\n' + to_string(serialized.length()) + '\n' + serialized + '\n';
     
     auto const hand = frame.hands()[0];
     
     gestures_.emplace(name, make_pair(hand, to_position(hand)));
 }
 
-string Lexicon::match(Leap::Hand const& hand) const
+char Lexicon::match(Leap::Hand const& hand) const
 {
     auto const positions = to_position(hand);
     
     double delta_cap = numeric_limits<double>::max(), delta;
-    string name;
+    char name;
     
     for(auto const& gesture : gestures_)
     {
@@ -43,12 +43,12 @@ string Lexicon::match(Leap::Hand const& hand) const
     return name;
 }
 
-multimap<double, string> Lexicon::compare(Leap::Hand const& hand) const
+multimap<double, char> Lexicon::compare(Leap::Hand const& hand) const
 {
-    multimap<double, string> scores;
+    multimap<double, char> scores;
     
     auto const normalized = to_position(hand);
-    map<string, set<double>> multiscores;
+    map<char, set<double>> multiscores;
     
     for(auto const& gesture : gestures_)
     {
@@ -63,9 +63,9 @@ multimap<double, string> Lexicon::compare(Leap::Hand const& hand) const
     return scores;
 }
 
-vector<string> Lexicon::names() const
+vector<char> Lexicon::names() const
 {
-    vector<string> n;
+    vector<char> n;
     
     transform(gestures_.begin(), gestures_.end(), back_inserter(n), [](auto const& p){ return p.first; });
     n.erase(unique(n.begin(), n.end()));
@@ -73,7 +73,7 @@ vector<string> Lexicon::names() const
     return n;
 }
     
-vector<Leap::Hand> Lexicon::hands(string const& name) const
+vector<Leap::Hand> Lexicon::hands(char const name) const
 {
     vector<Leap::Hand> hands;
 
@@ -104,8 +104,9 @@ istream& operator>>(istream& i, Lexicon& t)
     while(ss)
     {
         // Read the name.
-        string name;
-        getline(ss, name);
+        char name;
+        ss >> noskipws >> name;
+        ss.ignore();
         
         if(ss)
         {

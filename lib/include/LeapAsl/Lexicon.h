@@ -17,25 +17,25 @@ class Lexicon
 {
 public:
     // Add a pose to the set of known poses.
-    void capture(std::string const& name, Leap::Frame const& frame);
+    void capture(char const name, Leap::Frame const& frame);
     
     // Returns highest scoring gesture.
-    std::string match(Leap::Hand const& hand) const;
+    char match(Leap::Hand const& hand) const;
     
     // Returns sorted scores of all gestures.
-    std::multimap<double, std::string> compare(Leap::Hand const& hand) const;
+    std::multimap<double, char> compare(Leap::Hand const& hand) const;
     
     // Returns unique names of all gestures.
-    std::vector<std::string> names() const;
+    std::vector<char> names() const;
     
     // Returns the Leap::Hand objects associated with the given name.
-    std::vector<Leap::Hand> hands(std::string const& name) const;
+    std::vector<Leap::Hand> hands(char const name) const;
     
 private:
     friend std::ostream& operator<<(std::ostream&, Lexicon const&);
     friend std::istream& operator>>(std::istream&, Lexicon&);
     
-    std::multimap<std::string, std::pair<Leap::Hand, fingers_position>> gestures_;
+    std::multimap<char, std::pair<Leap::Hand, fingers_position>> gestures_;
     
     std::string serialized_data_;
 };

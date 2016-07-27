@@ -29,12 +29,12 @@ void Analyzer::reset()
     reset_ = true;
 }
 
-void Analyzer::on_recognition(multimap<double, string> const& matches)
+void Analyzer::on_recognition(multimap<double, char> const& matches)
 {
     // Keep the top N matches and give ourselves a vector of indices.
     size_t const n_top_matches = min((size_t)5, matches.size());
     
-    vector<pair<double, string>> top_matches;
+    vector<pair<double, char>> top_matches;
     copy_n(matches.begin(), n_top_matches, back_inserter(top_matches));
 
     // Normalize the scores of the top matches where the worse one is 5.0. (Somewhat in line with language model score.)
@@ -56,12 +56,12 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
     {
         for(int i : indices)
         {
-            if(top_matches[i].second != " " && top_matches[i].second != ".") // Skip space and punctuation at the begininng of a sentence.
+            if(top_matches[i].second != ' ' && top_matches[i].second != '.') // Skip space and punctuation at the begininng of a sentence.
             {
                 lm::ngram::State out_state;
-                auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(top_matches[i].second), out_state);
+                auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(string(1, top_matches[i].second)), out_state);
                 
-                sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, make_pair(top_matches[i].second, model_.BeginSentenceState()));
+                sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, make_pair(string(1, top_matches[i].second), model_.BeginSentenceState()));
             }
         }
     }
@@ -76,9 +76,9 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
             
             for(int i : indices)
             {
-                string const s = top_matches[i].second;
+                char const c = top_matches[i].second;
                 
-                if(s == " ")
+                if(c == ' ')
                 {
                     if(!last_word.empty())  // Do nothing on double spaces.
                     {
@@ -89,11 +89,11 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
                             auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
                             
                             sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                              make_pair(sentence.second.first + s, out_state));
+                                              make_pair(sentence.second.first + c, out_state));
                         }
                     }
                 }
-                else if(s == ".")
+                else if(c == '.')
                 {
                     if(!last_word.empty())  // Do nothing on double spaces.
                     {
@@ -104,13 +104,13 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
                             auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index("</s>"), out_state);
                             
                             sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                              make_pair(sentence.second.first + s, out_state));
+                                              make_pair(sentence.second.first + c, out_state));
                         }
                     }
                 }
                 else
                 {
-                    auto const word = last_word + s;
+                    auto const word = last_word + c;
                     
                     auto const validity = dictionary_.validate(word.begin(), word.end());
                     if(validity & detail::trie<char>::valid)
@@ -119,7 +119,7 @@ void Analyzer::on_recognition(multimap<double, string> const& matches)
                         auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(word), out_state);
                         
                         sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                          make_pair(sentence.second.first + s, sentence.second.second));
+                                          make_pair(sentence.second.first + c, sentence.second.second));
                     }
                 }
             }

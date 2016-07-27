@@ -95,7 +95,7 @@ void Recognizer::analyze(Leap::Frame const& frame, time_point const& now)
     if(now - anchor_sample_ >= hold_duration_)
     {
         // Order gesture names by their scores.
-        multimap<double, string> matches;
+        multimap<double, char> matches;
         for(auto const& score : scores_)
         {
             matches.emplace(score.second / 1000, score.first);
