@@ -63,6 +63,16 @@ multimap<double, string> Lexicon::compare(Leap::Hand const& hand) const
     return scores;
 }
 
+vector<string> Lexicon::names() const
+{
+    vector<string> n;
+    
+    transform(gestures_.begin(), gestures_.end(), back_inserter(n), [](auto const& p){ return p.first; });
+    n.erase(unique(n.begin(), n.end()));
+    
+    return n;
+}
+    
 vector<Leap::Hand> Lexicon::hands(string const& name) const
 {
     vector<Leap::Hand> hands;
