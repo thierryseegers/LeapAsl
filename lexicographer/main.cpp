@@ -24,7 +24,7 @@ using namespace std;
 int main()
 {
     sf::Font font;
-    if(!font.loadFromFile("resources/arial.ttf"))
+    if(!font.loadFromFile("./resources/arial.ttf"))
     {
         return EXIT_FAILURE;
     }
@@ -51,6 +51,7 @@ int main()
     }
     
     Leap::Controller controller;
+    controller.setPolicy(Leap::Controller::POLICY_IMAGES);
     Leap::Hand replay_hand = Leap::Hand::invalid();
 
     // Request a 32-bits depth buffer when creating the window
@@ -144,18 +145,55 @@ int main()
                 // Record (or re-record) a character.
                 else if(controller.frame().hands()[0].isValid())
                 {
+                    auto const& frame = controller.frame();
+                    
+                    auto const save_images = [&](string const& name)
+                    {
+                        auto const& left = frame.images()[0], right = frame.images()[1];
+                        auto const w = left.width(), h = left.height();
+                        
+                        sf::Image image;
+                        image.create(left.width(), left.height());
+                        
+                        for(int x = 0; x != left.width(); ++x)
+                        {
+                            for(int y = 0; y != left.height(); ++y)
+                            {
+                                char c = left.data()[y * left.width() + x];
+                                image.setPixel(x, y, sf::Color(c, c, c));
+                            }
+                        }
+                        
+                        image.saveToFile(name + "-left" + ".bmp");
+                        
+                        for(int x = 0; x != left.width(); ++x)
+                        {
+                            for(int y = 0; y != left.height(); ++y)
+                            {
+                                char c = right.data()[y * left.width() + x];
+                                image.setPixel(x, y, sf::Color(c, c, c));
+                            }
+                        }
+                        
+                        image.saveToFile(name + "-right" + ".bmp");
+                    };
+                    
+                    char name = '?';
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
-                        lexicon.capture(event.key.code + 'a', controller.frame());
+                        name = event.key.code + 'a';
                     }
                     else if(event.key.code == sf::Keyboard::Space)
                     {
-                        lexicon.capture(' ', controller.frame());
+                        name = ' ';
                     }
                     else if(event.key.code == sf::Keyboard::Period)
                     {
-                        lexicon.capture('.', controller.frame());
+                        name = '.';
                     }
+                    
+                    lexicon.capture(name, frame);
+                    save_images(string(1, name));
                 }
             }
         }
