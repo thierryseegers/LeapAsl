@@ -30,6 +30,10 @@ set_target_properties(LeapAsl PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+target_compile_options(LeapAsl
+    PUBLIC -DKENLM_MAX_ORDER=6
+)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
    CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(LeapAsl
