@@ -50,15 +50,26 @@ int main()
         {
             labels << character_to_label.at(name) << '\n';
             
+            bool first = true;
+            
             for(auto const& finger : LeapAsl::to_position(hand))
             {
+                if(first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    data << ',';
+                }
+                
                 for(auto const& joint : finger)
                 {
-                    data << joint.x << ',' << joint.y << ',' << joint.z << ',';
+                    data << joint.x << ',' << joint.y << ',' << joint.z;
                 }
             }
             
-            data << "\b\n";
+            data << "\n";
         }
     }
 
