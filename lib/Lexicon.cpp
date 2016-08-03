@@ -98,33 +98,28 @@ istream& operator>>(istream& i, Lexicon& t)
     ss << i.rdbuf();
     t.serialized_data_ = ss.str();
     
+    ss << noskipws;
+    
     // Read gestures data.
     t.gestures_.clear();
     Leap::Frame frame;
-    while(ss)
+    char name;
+    while(ss >> name, ss.ignore())
     {
-        // Read the name.
-        char name;
-        ss >> noskipws >> name;
+        // Read the serialized frame data.
+        string::size_type serialized_length;
+        ss >> serialized_length;
         ss.ignore();
         
-        if(ss)
-        {
-            // Read the serialized frame data.
-            string::size_type serialized_length;
-            ss >> serialized_length;
-            ss.ignore();
-            
-            string serialized_frame(serialized_length, '\0');
-            ss.read(&*serialized_frame.begin(), serialized_length);
-            ss.ignore();
-            
-            //data.first.deserialize(serialized_frame);
-            frame.deserialize(serialized_frame);
-            
-            auto const hand = frame.hands()[0];
-            t.gestures_.emplace(name, make_pair(hand, to_position(hand)));
-        }
+        string serialized_frame(serialized_length, '\0');
+        ss.read(&*serialized_frame.begin(), serialized_length);
+        ss.ignore();
+        
+        //data.first.deserialize(serialized_frame);
+        frame.deserialize(serialized_frame);
+        
+        auto const hand = frame.hands()[0];
+        t.gestures_.emplace(name, make_pair(hand, to_position(hand)));
     }
     
     return i;
