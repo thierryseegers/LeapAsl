@@ -4,6 +4,7 @@
 #include <LeapSDK/LeapMath.h>
 #include <LeapSDK/util/LeapUtilGL.h>
 
+#include <algorithm>
 #include <iostream>
 
 namespace LeapAsl
@@ -29,6 +30,19 @@ double difference(fingers_position const& a, fingers_position const& b, double c
     }
     
     return delta;
+}
+
+double difference(bones_directions const& a, bones_directions const& b, double const delta_cap)
+{
+    double delta = 0.;
+    
+    for(auto i = 0; i != a.size() && delta < delta_cap; ++i)
+    {
+        delta += a[i].xBasis.angleTo(b[i].xBasis) + a[i].yBasis.angleTo(b[i].yBasis) + a[i].zBasis.angleTo(b[i].zBasis);
+    }
+    
+    return delta;
+    
 }
 
 fingers_position to_position(Leap::Hand const& hand)
@@ -61,6 +75,28 @@ fingers_position to_position(Leap::Hand const& hand)
     return fp;
 }
 
+bones_directions to_directions(Leap::Hand const& hand)
+{
+    bones_directions bd;
+    
+    auto const normalized_centered = normalized_hand_transform(hand) * Leap::Matrix{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}, -hand.palmPosition()};
+    auto const& fingers = hand.fingers();
+    
+    for(int f = 0; f != 5; ++f)
+    {
+        auto const& finger = fingers[f];
+        
+        for(int b = Leap::Bone::TYPE_METACARPAL; b != Leap::Bone::TYPE_DISTAL; ++b)
+        {
+            auto const& bone = finger.bone((Leap::Bone::Type)b);
+            
+            bd[f * 5 + b] = normalized_centered * bone.basis();
+        }
+    }
+    
+    return bd;
+}
+    
 Leap::Matrix normalized_hand_transform(Leap::Hand const& hand)
 {
     Leap::Matrix normalized;
