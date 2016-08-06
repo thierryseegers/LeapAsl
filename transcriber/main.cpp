@@ -80,19 +80,14 @@ int main()
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
-    LeapAsl::Lexicon lexicon;
+    ifstream lexicon_data_istream("lexicon", ios::binary);
+    if(!lexicon_data_istream)
     {
-        ifstream lexicon_data_istream("lexicon", ios::binary);
+        lexicon_data_istream.open("lexicon.sample", ios::binary);
         if(!lexicon_data_istream)
         {
-            lexicon_data_istream.open("lexicon.sample", ios::binary);
-            if(!lexicon_data_istream)
-            {
-                return EXIT_FAILURE;
-            }
+            return EXIT_FAILURE;
         }
-        
-        lexicon_data_istream >> lexicon;
     }
     
     ofstream record_stream("capture");
@@ -101,7 +96,8 @@ int main()
     Leap::Controller controller;
     controller.addListener(recorder);
     
-    LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer<LeapAsl::Predictors::Lexicon> recognizer(forward<ifstream>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+    //LeapAsl::Recognizer<LeapAsl::Predictors::MlpackSoftmaxRegression> recognizer("/Users/thierry/Code/mlpack/build/Xcode/bin/Release/lexicon_softmax_regression_model.xml", bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     controller.addListener(recognizer);
     
     Leap::Hand replay_hand;
@@ -190,17 +186,17 @@ int main()
                         if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                         {
                             replay_character.setString(char(event.key.code + 'a'));
-                            replay_hand = lexicon.hands(replay_character.getString()[0])[0];
+                            //replay_hand = lexicon.hands(replay_character.getString()[0])[0];
                         }
                         else if(event.key.code == sf::Keyboard::Space)
                         {
                             replay_character.setString('_');
-                            replay_hand = lexicon.hands(' ')[0];
+                            //replay_hand = lexicon.hands(' ')[0];
                         }
                         else if(event.key.code == sf::Keyboard::Period)
                         {
                             replay_character.setString('.');
-                            replay_hand = lexicon.hands('.')[0];
+                            //replay_hand = lexicon.hands('.')[0];
                         }
                         
                     }
