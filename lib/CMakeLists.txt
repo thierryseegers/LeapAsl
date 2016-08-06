@@ -4,7 +4,7 @@ find_package(BZip2 REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
-find_package(mlpack)
+find_package(mlpack REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
 
