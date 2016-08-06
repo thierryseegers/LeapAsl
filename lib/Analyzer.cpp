@@ -35,11 +35,11 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
     size_t const n_top_matches = min((size_t)5, matches.size());
     
     vector<pair<double, char>> top_matches;
-    copy_n(matches.begin(), n_top_matches, back_inserter(top_matches));
+    copy_n(matches.rbegin(), n_top_matches, back_inserter(top_matches));
 
     // Normalize the scores of the top matches where the worse one is 5.0. (Somewhat in line with language model score.)
-    double const normalization_factor = 5. / top_matches.back().first;
-    transform(top_matches.begin(), top_matches.end(), top_matches.begin(), [&](auto& p){ p.first *= normalization_factor; return p; });
+    double const normalization_factor = 3. * top_matches.back().first;
+    transform(top_matches.begin(), top_matches.end(), top_matches.begin(), [&](auto p){ p.first = normalization_factor / p.first; return p; });
 
     vector<size_t> indices(n_top_matches);
     iota(indices.begin(), indices.end(), 0);

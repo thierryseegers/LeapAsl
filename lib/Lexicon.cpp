@@ -49,15 +49,19 @@ multimap<double, char> Lexicon::compare(Leap::Hand const& hand) const
     
     auto const normalized = to_position(hand);
     map<char, set<double>> multiscores;
+    double max_difference = 0.;
     
     for(auto const& gesture : gestures_)
     {
-        multiscores[gesture.first].insert(difference(gesture.second.second, normalized));
+        auto const d = difference(gesture.second.second, normalized);
+        
+        multiscores[gesture.first].insert(d);
+        max_difference = max(max_difference, d);
     }
     
     for(auto const& multiscore : multiscores)
     {
-        scores.emplace(*multiscore.second.begin(), multiscore.first);
+        scores.emplace(1 - *multiscore.second.begin() / max_difference, multiscore.first);
     }
     
     return scores;

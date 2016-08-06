@@ -54,7 +54,7 @@ multimap<double, char> MlpackSoftmaxRegression::predict(Leap::Hand const& hand) 
     
     for(int i = 0; i != probabilities.n_rows; ++i)
     {
-        scores.emplace(1 - probabilities(i, 0), label_to_character.at(i));
+        scores.emplace(probabilities(i, 0), label_to_character.at(i));
     }
     
     return scores;
