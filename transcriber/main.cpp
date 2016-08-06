@@ -96,8 +96,8 @@ int main()
     Leap::Controller controller;
     controller.addListener(recorder);
     
-    //LeapAsl::Recognizer<LeapAsl::Predictors::Lexicon> recognizer(forward<ifstream>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
-    LeapAsl::Recognizer<LeapAsl::Predictors::MlpackSoftmaxRegression> recognizer("/Users/thierry/Code/mlpack/build/Xcode/bin/Release/lexicon_softmax_regression_model.xml", bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+    LeapAsl::Recognizer<LeapAsl::Predictors::Lexicon> recognizer(forward<ifstream>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+    //LeapAsl::Recognizer<LeapAsl::Predictors::MlpackSoftmaxRegression> recognizer("/Users/thierry/Code/mlpack/build/Xcode/bin/Release/lexicon_softmax_regression_model.xml", bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     controller.addListener(recognizer);
     
     Leap::Hand replay_hand;
