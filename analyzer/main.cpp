@@ -21,24 +21,19 @@ int main()
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
 
-    LeapAsl::Lexicon lexicon;
+    ifstream lexicon_data_istream("lexicon", ios::binary);
+    if(!lexicon_data_istream)
     {
-        ifstream lexicon_data_istream("lexicon", ios::binary);
+        lexicon_data_istream.open("lexicon.sample", ios::binary);
         if(!lexicon_data_istream)
         {
-            lexicon_data_istream.open("lexicon.sample", ios::binary);
-            if(!lexicon_data_istream)
-            {
-                return EXIT_FAILURE;
-            }
+            return EXIT_FAILURE;
         }
-        
-        lexicon_data_istream >> lexicon;
     }
     
     LeapAsl::RecordPlayer record_player(cin);
     
-    LeapAsl::Recognizer recognizer(lexicon, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1), 1s, 1s);
+    LeapAsl::Recognizer<LeapAsl::Predictors::Lexicon> recognizer(forward<ifstream>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     record_player.add_listener(recognizer);
     
     record_player.read();

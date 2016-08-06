@@ -49,15 +49,19 @@ multimap<double, char> Lexicon::compare(Leap::Hand const& hand) const
     
     auto const normalized = to_position(hand);
     map<char, set<double>> multiscores;
+    double max_difference = 0.;
     
     for(auto const& gesture : gestures_)
     {
-        multiscores[gesture.first].insert(difference(gesture.second.second, normalized));
+        auto const d = difference(gesture.second.second, normalized);
+        
+        multiscores[gesture.first].insert(d);
+        max_difference = max(max_difference, d);
     }
     
     for(auto const& multiscore : multiscores)
     {
-        scores.emplace(*multiscore.second.begin(), multiscore.first);
+        scores.emplace(1 - *multiscore.second.begin() / max_difference, multiscore.first);
     }
     
     return scores;
@@ -98,33 +102,28 @@ istream& operator>>(istream& i, Lexicon& t)
     ss << i.rdbuf();
     t.serialized_data_ = ss.str();
     
+    ss << noskipws;
+    
     // Read gestures data.
     t.gestures_.clear();
     Leap::Frame frame;
-    while(ss)
+    char name;
+    while(ss >> name, ss.ignore())
     {
-        // Read the name.
-        char name;
-        ss >> noskipws >> name;
+        // Read the serialized frame data.
+        string::size_type serialized_length;
+        ss >> serialized_length;
         ss.ignore();
         
-        if(ss)
-        {
-            // Read the serialized frame data.
-            string::size_type serialized_length;
-            ss >> serialized_length;
-            ss.ignore();
-            
-            string serialized_frame(serialized_length, '\0');
-            ss.read(&*serialized_frame.begin(), serialized_length);
-            ss.ignore();
-            
-            //data.first.deserialize(serialized_frame);
-            frame.deserialize(serialized_frame);
-            
-            auto const hand = frame.hands()[0];
-            t.gestures_.emplace(name, make_pair(hand, to_position(hand)));
-        }
+        string serialized_frame(serialized_length, '\0');
+        ss.read(&*serialized_frame.begin(), serialized_length);
+        ss.ignore();
+        
+        //data.first.deserialize(serialized_frame);
+        frame.deserialize(serialized_frame);
+        
+        auto const hand = frame.hands()[0];
+        t.gestures_.emplace(name, make_pair(hand, to_position(hand)));
     }
     
     return i;
