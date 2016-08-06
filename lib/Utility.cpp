@@ -48,7 +48,7 @@ fingers_position to_position(Leap::Hand const& hand)
             
             if(b == Leap::Bone::TYPE_METACARPAL)
             {
-                fp[f][b] += normalized_centered.transformPoint(bone.prevJoint());
+                fp[f][b] = normalized_centered.transformPoint(bone.prevJoint());
                 fp[f][b + 1] = normalized_centered.transformPoint(bone.nextJoint());
             }
             else
