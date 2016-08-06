@@ -60,6 +60,7 @@ private:
         {
             anchor_ = fingers_position();
             scores_.clear();
+            n_frames_analyzed_ = 0;
             
             return;
         }
@@ -71,6 +72,7 @@ private:
         {
             anchor_ = fingers_position();
             scores_.clear();
+            n_frames_analyzed_ = 0;
             
             return;
         }
@@ -90,14 +92,17 @@ private:
             anchor_sample_ = now;
             
             scores_.clear();
+            n_frames_analyzed_ = 0;
         }
         
         // Analyze the one hand present.
         
-        
+        n_frames_analyzed_ += 1;
         for(auto const& score : predictor_->predict(hand))
         {
-            scores_[score.second] += score.first;
+            double& average = scores_[score.second];
+            average = (average * (n_frames_analyzed_ - 1) + score.first) / n_frames_analyzed_;
+            //scores_[score.second] += score.first;
         }
         
         // If we have past our \ref hold_duration, report what we have, reset the information and schedule the next sample analysis for \ref rest_duration_ later.
@@ -132,7 +137,7 @@ private:
     fingers_position anchor_ = fingers_position();
     std::map<char, double> scores_;
     Recognizer::time_point anchor_sample_, next_sample_;
-
+    size_t n_frames_analyzed_;
 };
 
 template<>
@@ -142,6 +147,7 @@ Recognizer<Predictors::Lexicon>::Recognizer(std::ifstream&& predictor_input_stre
     , hold_duration_(hold_duration)
     , rest_duration_(rest_duration)
     , next_sample_()
+    , n_frames_analyzed_(0)
 {}
 
 template<>
@@ -151,6 +157,7 @@ Recognizer<Predictors::MlpackSoftmaxRegression>::Recognizer(std::string const& p
     , hold_duration_(hold_duration)
     , rest_duration_(rest_duration)
     , next_sample_()
+    , n_frames_analyzed_(0)
 {}
 
 }
