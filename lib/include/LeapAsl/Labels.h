@@ -4,7 +4,7 @@
 
 namespace LeapAsl
 {
-    
+
 static const std::map<char, int> character_to_label = {
     {' ', 0},
     {'.', 1},
