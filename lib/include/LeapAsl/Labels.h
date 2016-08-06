@@ -2,7 +2,10 @@
 
 #include <map>
 
-const std::map<char, int> character_to_label = {
+namespace LeapAsl
+{
+    
+static const std::map<char, int> character_to_label = {
     {' ', 0},
     {'.', 1},
     {'a', 2},
@@ -31,9 +34,9 @@ const std::map<char, int> character_to_label = {
     {'y', 25},
 };
 
-auto const& ctl = character_to_label;
+static auto const& ctl = character_to_label;
 
-const std::map<int, char> label_to_character = {
+static const std::map<int, char> label_to_character = {
     {0, ' '},
     {1, '.'},
     {2, 'a'},
@@ -62,4 +65,6 @@ const std::map<int, char> label_to_character = {
     {25, 'y'},
 };
 
-auto const& ltc = label_to_character;
+static auto const& ltc = label_to_character;
+
+}

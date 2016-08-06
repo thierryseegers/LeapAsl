@@ -20,7 +20,7 @@ int main()
     {
         for(auto const& hand : lexicon.hands(name))
         {
-            labels << character_to_label.at(name) << '\n';
+            labels << LeapAsl::character_to_label.at(name) << '\n';
             
             bool first = true;
 
