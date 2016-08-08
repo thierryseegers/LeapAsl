@@ -38,19 +38,30 @@ multimap<double, char> MlpackSoftmaxRegression::predict(Leap::Hand const& hand) 
 {
     multimap<double, char> scores;
     
-    arma::mat data(60, 1);
-    size_t i = 0;
-    for(auto const& finger : to_position(hand))
-        for(auto const point : finger)
-        {
-            data(i++, 0) = point.x;
-            data(i++, 0) = point.y;
-            data(i++, 0) = point.z;
-        }
-    
-    arma::mat const hypothesis = arma::exp(arma::repmat(softmax_regression_model_.Parameters().col(0), 1, data.n_cols) +
-                                           softmax_regression_model_.Parameters().cols(1, softmax_regression_model_.Parameters().n_cols - 1) * data);
-    arma::mat const probabilities = hypothesis / arma::repmat(arma::sum(hypothesis, 0), 26, 1);
+	arma::Mat<double> data(240, 1);
+	int i = 0;
+
+	for(auto const& bone : LeapAsl::to_directions(hand))
+	{
+		data(i++, 0) = bone.origin.x;
+		data(i++, 0) = bone.origin.y;
+		data(i++, 0) = bone.origin.z;
+
+		data(i++, 0) = bone.xBasis.x;
+		data(i++, 0) = bone.xBasis.y;
+		data(i++, 0) = bone.xBasis.z;
+
+		data(i++, 0) = bone.yBasis.x;
+		data(i++, 0) = bone.yBasis.y;
+		data(i++, 0) = bone.yBasis.z;
+
+		data(i++, 0) = bone.zBasis.x;
+		data(i++, 0) = bone.zBasis.y;
+		data(i++, 0) = bone.zBasis.z;
+	}
+
+	arma::mat const hypothesis = arma::exp(softmax_regression_model_.Parameters() * data);
+	arma::mat const probabilities = hypothesis / arma::repmat(arma::sum(hypothesis, 0), 26, 1);
     
     for(int i = 0; i != probabilities.n_rows; ++i)
     {
