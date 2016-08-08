@@ -96,16 +96,13 @@ private:
         }
         
         // Analyze the one hand present.
-        
-        n_frames_analyzed_ += 1;
         for(auto const& score : predictor_->predict(hand))
         {
             double& average = scores_[score.second];
-            average = (average * (n_frames_analyzed_ - 1) + score.first) / n_frames_analyzed_;
-            //scores_[score.second] += score.first;
+            average = (average * n_frames_analyzed_ + score.first) / (n_frames_analyzed_ + 1);
         }
-        
-        // If we have past our \ref hold_duration, report what we have, reset the information and schedule the next sample analysis for \ref rest_duration_ later.
+
+		// If we have past our \ref hold_duration, report what we have, reset the information and schedule the next sample analysis for \ref rest_duration_ later.
         // Else, just set the next sample analysis for as soon as possible.
         if(now - anchor_sample_ >= hold_duration_)
         {
@@ -119,11 +116,13 @@ private:
             
             anchor_ = fingers_position();
             scores_.clear();
+			n_frames_analyzed_ = 0;
             
             next_sample_ = now + rest_duration_;
         }
         else
         {
+			n_frames_analyzed_ += 1;
             next_sample_ = now;
         }
     }
