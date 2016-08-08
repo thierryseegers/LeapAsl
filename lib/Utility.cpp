@@ -86,11 +86,11 @@ bones_directions to_directions(Leap::Hand const& hand)
     {
         auto const& finger = fingers[f];
         
-        for(int b = Leap::Bone::TYPE_METACARPAL; b != Leap::Bone::TYPE_DISTAL; ++b)
+        for(int b = Leap::Bone::TYPE_METACARPAL; b != Leap::Bone::TYPE_DISTAL + 1; ++b)
         {
             auto const& bone = finger.bone((Leap::Bone::Type)b);
             
-            bd[f * 5 + b] = normalized_centered * bone.basis();
+            bd[f * (Leap::Bone::TYPE_DISTAL + 1) + b] = normalized_centered * bone.basis();
         }
     }
     
