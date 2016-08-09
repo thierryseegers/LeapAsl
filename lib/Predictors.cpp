@@ -61,7 +61,7 @@ multimap<double, char> MlpackSoftmaxRegression::predict(Leap::Hand const& hand) 
 	}
 
 	arma::mat const hypothesis = arma::exp(softmax_regression_model_.Parameters() * data);
-	arma::mat const probabilities = hypothesis / arma::repmat(arma::sum(hypothesis, 0), 26, 1);
+	arma::mat const probabilities = hypothesis / arma::repmat(arma::sum(hypothesis, 0), character_to_label.size(), 1);
     
     for(int i = 0; i != probabilities.n_rows; ++i)
     {
