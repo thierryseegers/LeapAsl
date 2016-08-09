@@ -20,7 +20,7 @@ namespace Predictors
     
 using namespace std;
 
-Lexicon::Lexicon(ifstream&& lexicon)
+Lexicon::Lexicon(ifstream& lexicon)
 {
     lexicon >> lexicon_;
 }

@@ -37,7 +37,7 @@ int main()
 #if defined(USE_MLPACK)
 	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("softmax_regression_model.xml"), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
 #else
-	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::Lexicon>(forward<ifstream>(lexicon_data_istream)), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
 #endif
 
 	record_player.add_listener(recognizer);
