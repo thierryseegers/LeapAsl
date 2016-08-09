@@ -2,9 +2,12 @@
 #include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
-#include <mlpack/core.hpp>
-#include <mlpack/methods/softmax_regression/softmax_regression.hpp>
+#if defined(USE_MLPACK)
+	#include <mlpack/core.hpp>
+	#include <mlpack/methods/softmax_regression/softmax_regression.hpp>
+#endif
 
+#include <fstream>
 #include <iostream>
 
 using namespace std;
@@ -16,6 +19,7 @@ int main()
     lexicon_stream >> lexicon;
     //cin >> lexicon;
 
+#if defined(USE_MLPACK)
     arma::Mat<double> training_data(240, 0);
     arma::Row<size_t> training_labels;
     
@@ -58,6 +62,7 @@ int main()
     mlpack::regression::SoftmaxRegression<> sm_regression(optimizer);
     
     mlpack::data::Save("softmax_regression_model.xml", "softmax_regression_model", sm_regression, true);
-
+#endif
+	
     return 0;
 }

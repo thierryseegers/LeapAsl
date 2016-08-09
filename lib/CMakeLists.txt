@@ -1,12 +1,15 @@
-find_package(Armadillo REQUIRED)
 find_package(Boost REQUIRED COMPONENTS serialization system thread)
 find_package(BZip2 REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(KenLM REQUIRED)
 find_package(Leap REQUIRED)
-find_package(mlpack REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
+
+if(USE_MLPACK)
+	find_package(Armadillo REQUIRED)
+	find_package(mlpack REQUIRED)
+endif()
 
 add_library(LeapAsl
     ${CMAKE_CURRENT_SOURCE_DIR}/include/LeapAsl/Analyzer.h
@@ -49,6 +52,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
     )
 endif()
 
+if(USE_MLPACK)
+	target_compile_options(LeapAsl
+		PUBLIC -DUSE_MLPACK
+	)
+endif()
+
+
 target_include_directories(LeapAsl
     PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PUBLIC $<INSTALL_INTERFACE:include>
@@ -56,8 +66,13 @@ target_include_directories(LeapAsl
     PUBLIC ${KenLM_INCLUDE_DIRS}
     PUBLIC ${Leap_INCLUDE_DIR}
     PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
-    PUBLIC ${mlpack_INCLUDE_DIR}
 )
+
+if(USE_MLPACK)
+	target_include_directories(LeapAsl
+		PUBLIC ${mlpack_INCLUDE_DIR}
+	)
+endif()
 
 target_link_libraries(LeapAsl
     PRIVATE ${ARMADILLO_LIBRARIES}
@@ -66,7 +81,13 @@ target_link_libraries(LeapAsl
     PRIVATE ${GLUT_LIBRARY}
     PUBLIC ${KenLM_LIBRARIES}
     PUBLIC ${Leap_BUILD_LIBRARIES}
-    PRIVATE ${mlpack_LIBRARIES}
     PRIVATE ${OPENGL_LIBRARIES}
     PRIVATE ${ZLIB_LIBRARIES}
 )
+
+if(USE_MLPACK)
+	target_link_libraries(LeapAsl
+		PRIVATE ${ARMADILLO_LIBRARIES}
+		PRIVATE ${mlpack_LIBRARIES}
+	)
+endif()

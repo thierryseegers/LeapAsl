@@ -119,7 +119,6 @@ istream& operator>>(istream& i, Lexicon& t)
         ss.read(&*serialized_frame.begin(), serialized_length);
         ss.ignore();
         
-        //data.first.deserialize(serialized_frame);
         frame.deserialize(serialized_frame);
         
         auto const hand = frame.hands()[0];
