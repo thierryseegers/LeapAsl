@@ -35,7 +35,7 @@ private:
     friend std::ostream& operator<<(std::ostream&, Lexicon const&);
     friend std::istream& operator>>(std::istream&, Lexicon&);
     
-    std::multimap<char, std::pair<Leap::Hand, fingers_position>> gestures_;
+    std::multimap<char, std::pair<Leap::Hand, bones_directions>> gestures_;
     
     std::string serialized_data_;
 };

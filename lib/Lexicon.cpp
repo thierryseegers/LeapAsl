@@ -19,21 +19,21 @@ void Lexicon::capture(char const name, Leap::Frame const& frame)
     auto const serialized = frame.serialize();
     serialized_data_ += string(1, name) + '\n' + to_string(serialized.length()) + '\n' + serialized + '\n';
     
-    auto const hand = frame.hands()[0];
+    auto const& hand = frame.hands()[0];
     
-    gestures_.emplace(name, make_pair(hand, to_position(hand)));
+    gestures_.emplace(name, make_pair(hand, to_directions(hand)));
 }
 
 char Lexicon::match(Leap::Hand const& hand) const
 {
-    auto const positions = to_position(hand);
+    auto const directions = to_directions(hand);
     
     double delta_cap = numeric_limits<double>::max(), delta;
     char name;
     
     for(auto const& gesture : gestures_)
     {
-        if((delta = difference(gesture.second.second, positions, delta_cap)) < delta_cap)
+        if((delta = difference(gesture.second.second, directions, delta_cap)) < delta_cap)
         {
             delta_cap = delta;
             name = gesture.first;
@@ -47,13 +47,13 @@ multimap<double, char> Lexicon::compare(Leap::Hand const& hand) const
 {
     multimap<double, char> scores;
     
-    auto const normalized = to_position(hand);
+    auto const directions = to_directions(hand);
     map<char, set<double>> multiscores;
     double max_difference = 0.;
     
     for(auto const& gesture : gestures_)
     {
-        auto const d = difference(gesture.second.second, normalized);
+        auto const d = difference(gesture.second.second, directions);
         
         multiscores[gesture.first].insert(d);
         max_difference = max(max_difference, d);
@@ -119,11 +119,10 @@ istream& operator>>(istream& i, Lexicon& t)
         ss.read(&*serialized_frame.begin(), serialized_length);
         ss.ignore();
         
-        //data.first.deserialize(serialized_frame);
         frame.deserialize(serialized_frame);
         
         auto const hand = frame.hands()[0];
-        t.gestures_.emplace(name, make_pair(hand, to_position(hand)));
+        t.gestures_.emplace(name, make_pair(hand, to_directions(hand)));
     }
     
     return i;

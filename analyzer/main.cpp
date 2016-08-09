@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <thread>
+#include <utility>
 
 using namespace std;
 
@@ -30,13 +31,17 @@ int main()
             return EXIT_FAILURE;
         }
     }
-    
+
     LeapAsl::RecordPlayer record_player(cin);
-    
-    LeapAsl::Recognizer<LeapAsl::Predictors::Lexicon> recognizer(forward<ifstream>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
-    record_player.add_listener(recognizer);
-    
-    record_player.read();
+
+#if defined(USE_MLPACK)
+	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("softmax_regression_model.xml"), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+#else
+	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+#endif
+
+	record_player.add_listener(recognizer);
+	record_player.read();
     
     cout << last_top_sentence << '\n' << cumulative_distance << '\n';
     
