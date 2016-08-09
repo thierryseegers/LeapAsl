@@ -47,6 +47,14 @@ public:
     }
     
 private:
+	Recognizer(on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
+		: on_recognition_(on_recognition)
+		, hold_duration_(hold_duration)
+		, rest_duration_(rest_duration)
+		, next_sample_()
+		, n_frames_analyzed_(0)
+	{}
+
     void analyze(Leap::Frame const& frame, time_point const& now)
     {
         // If we are not scheduled to take a sample yet, return immediately.
@@ -141,22 +149,16 @@ private:
 
 template<>
 Recognizer<Predictors::Lexicon>::Recognizer(std::ifstream&& predictor_input_stream, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
-    : predictor_(new Predictors::Lexicon(std::forward<std::ifstream>(predictor_input_stream)))
-    , on_recognition_(on_recognition)
-    , hold_duration_(hold_duration)
-    , rest_duration_(rest_duration)
-    , next_sample_()
-    , n_frames_analyzed_(0)
-{}
+	: Recognizer(std::forward<on_recognition_f>(on_recognition), hold_duration, rest_duration)
+{
+	predictor_ = std::make_unique<Predictors::Lexicon>(std::forward<std::ifstream>(predictor_input_stream));
+}
 
 template<>
 Recognizer<Predictors::MlpackSoftmaxRegression>::Recognizer(std::string const& predictor_input_path, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
-    : predictor_(new Predictors::MlpackSoftmaxRegression(predictor_input_path))
-    , on_recognition_(on_recognition)
-    , hold_duration_(hold_duration)
-    , rest_duration_(rest_duration)
-    , next_sample_()
-    , n_frames_analyzed_(0)
-{}
+	: Recognizer(std::forward<on_recognition_f>(on_recognition), hold_duration, rest_duration)
+{
+	predictor_ = std::make_unique<Predictors::MlpackSoftmaxRegression>(predictor_input_path);
+}
 
 }
