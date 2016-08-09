@@ -15,16 +15,11 @@ namespace LeapAsl
 namespace Predictors
 {
 
-namespace
-{
-    
 class Predictor
 {
 public:
     virtual std::multimap<double, char> predict(Leap::Hand const& hand) const = 0;
 };
-    
-}
     
 class Lexicon : public Predictor
 {

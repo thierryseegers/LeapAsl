@@ -21,6 +21,7 @@ add_library(LeapAsl
     ${CMAKE_CURRENT_SOURCE_DIR}/Analyzer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Lexicon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Predictors.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/Recognizer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Recorder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/RecordPlayer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Utility.cpp
