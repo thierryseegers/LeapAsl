@@ -75,7 +75,6 @@ if(USE_MLPACK)
 endif()
 
 target_link_libraries(LeapAsl
-    PRIVATE ${ARMADILLO_LIBRARIES}
     PRIVATE ${Boost_LIBRARIES}
     PRIVATE ${BZIP2_LIBRARIES}
     PRIVATE ${GLUT_LIBRARY}
