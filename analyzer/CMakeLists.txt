@@ -1,5 +1,3 @@
-find_package(Leap REQUIRED)
-
 add_executable(analyzer
     levhenstein_distance.h
     main.cpp
@@ -22,12 +20,10 @@ endif()
 
 target_include_directories(analyzer
     PRIVATE ${Leap_INCLUDE_DIR}
-    PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
 )
 
 target_link_libraries(analyzer
     PRIVATE LeapAsl::LeapAsl
-    PRIVATE ${Leap_BUILD_LIBRARIES}
 )
 
 add_custom_command(TARGET analyzer POST_BUILD
