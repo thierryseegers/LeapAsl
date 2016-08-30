@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -34,13 +35,16 @@ int main()
 
     LeapAsl::RecordPlayer record_player(cin);
 
+	unique_ptr<LeapAsl::Predictors::Predictor> predictor;
 #if defined(USE_MLPACK)
-	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("softmax_regression_model.xml"), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+	predictor = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("softmax_regression_model.xml");
 #else
-	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+	predictor = make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream);
 #endif
 
+	LeapAsl::Recognizer recognizer(predictor.get(), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
 	record_player.add_listener(recognizer);
+
 	record_player.read();
     
     cout << last_top_sentence << '\n' << cumulative_distance << '\n';

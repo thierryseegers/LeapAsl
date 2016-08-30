@@ -31,6 +31,10 @@ int main()
         return EXIT_FAILURE;
     }
     
+	sf::Text predictor_name = sf::Text("", font, 30);
+	predictor_name.setColor(sf::Color(255, 255, 255, 170));
+	predictor_name.setPosition(20.f, 350.f);
+
     sf::Text asl_character = sf::Text("", font, 30);
     asl_character.setColor(sf::Color(255, 255, 255, 170));
     asl_character.setPosition(20.f, 400.f);
@@ -42,7 +46,7 @@ int main()
     sf::Text replay_character = sf::Text("", font, 50);
     replay_character.setColor(sf::Color(255, 255, 255, 170));
     replay_character.setPosition(600.f, 170.f);
-    
+
     sf::Text current_levhenstein_distance = sf::Text("", font, 30);
     current_levhenstein_distance.setColor(sf::Color(255, 255, 255, 170));
     current_levhenstein_distance.setPosition(400.f, 450.f);
@@ -79,28 +83,35 @@ int main()
     };
     
     LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
-
-    ifstream lexicon_data_istream("lexicon", ios::binary);
-    if(!lexicon_data_istream)
-    {
-        lexicon_data_istream.open("lexicon.sample", ios::binary);
-        if(!lexicon_data_istream)
-        {
-            return EXIT_FAILURE;
-        }
-    }
     
     ofstream record_stream("capture");
     LeapAsl::Recorder recorder(record_stream);
     
     Leap::Controller controller;
     controller.addListener(recorder);
-    
+
+	// Instantiate predictors.
+	map<string, unique_ptr<LeapAsl::Predictors::Predictor const>> predictors;
+
+	ifstream lexicon_data_istream("lexicon", ios::binary);
+	if(!lexicon_data_istream)
+	{
+		lexicon_data_istream.open("lexicon.sample", ios::binary);
+		if(!lexicon_data_istream)
+		{
+			return EXIT_FAILURE;
+		}
+	}
+	predictors["Lexicon"] = make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream);
 #if defined(USE_MLPACK)
-    LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("softmax_regression_model.xml"), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
-#else
-	LeapAsl::Recognizer recognizer(make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+	predictors["MlpackSoftmaxRegression"] = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("mlpack_softmax_regression_model.xml");
 #endif
+	auto const default_predictor = predictors.cbegin();
+
+	predictor_name.setString(default_predictor->first);
+
+	// Instantiate recognizer.
+	LeapAsl::Recognizer recognizer(default_predictor->second.get(), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     controller.addListener(recognizer);
     
     Leap::Hand replay_hand;
@@ -209,6 +220,13 @@ int main()
                         replay_hand = Leap::Hand::invalid();
                     }
                 }
+				else if(event.key.code >= sf::Keyboard::Num0 && event.key.code - sf::Keyboard::Num0 < predictors.size())
+				{
+					auto const p = next(predictors.cbegin(), event.key.code - sf::Keyboard::Num0);
+
+					predictor_name.setString(p->first);
+					recognizer.predictor() = p->second.get();
+				}
             }
         }
 
@@ -216,6 +234,8 @@ int main()
         
         window.pushGLStates();
         {
+			window.draw(predictor_name);
+			
             // Draw the last recognized letter.
             window.draw(asl_character);
             

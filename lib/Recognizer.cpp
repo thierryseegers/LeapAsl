@@ -14,8 +14,8 @@ namespace LeapAsl
 
 using namespace std;
 
-Recognizer::Recognizer(std::unique_ptr<Predictors::Predictor> predictor, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
-	: predictor_(move(predictor))
+Recognizer::Recognizer(Predictors::Predictor const* const predictor, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
+	: predictor_(predictor)
 	, on_recognition_(on_recognition)
 	, hold_duration_(hold_duration)
 	, rest_duration_(rest_duration)
@@ -29,6 +29,11 @@ Recognizer::~Recognizer()
 void Recognizer::onFrame(Leap::Controller const& controller)
 {
 	analyze(controller.frame(), chrono::high_resolution_clock::now());
+}
+
+Predictors::Predictor const*& Recognizer::predictor()
+{
+	return predictor_;
 }
 
 void Recognizer::on_frame(RecordPlayer const& record_player)
