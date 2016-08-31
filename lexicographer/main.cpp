@@ -145,39 +145,6 @@ int main()
                 // Record (or re-record) a character.
                 else if(controller.frame().hands()[0].isValid())
                 {
-                    auto const& frame = controller.frame();
-                    
-                    auto const save_images = [&](string const& name)
-                    {
-                        auto const& left = frame.images()[0], right = frame.images()[1];
-                        auto const w = left.width(), h = left.height();
-                        
-                        sf::Image image;
-                        image.create(left.width(), left.height());
-                        
-                        for(int x = 0; x != left.width(); ++x)
-                        {
-                            for(int y = 0; y != left.height(); ++y)
-                            {
-                                char c = left.data()[y * left.width() + x];
-                                image.setPixel(x, y, sf::Color(c, c, c));
-                            }
-                        }
-                        
-                        image.saveToFile(name + "-left" + ".bmp");
-                        
-                        for(int x = 0; x != left.width(); ++x)
-                        {
-                            for(int y = 0; y != left.height(); ++y)
-                            {
-                                char c = right.data()[y * left.width() + x];
-                                image.setPixel(x, y, sf::Color(c, c, c));
-                            }
-                        }
-                        
-                        image.saveToFile(name + "-right" + ".bmp");
-                    };
-                    
                     char name = '?';
                     if(event.key.code >= sf::Keyboard::A && event.key.code <= sf::Keyboard::Z)
                     {
@@ -192,8 +159,7 @@ int main()
                         name = '.';
                     }
                     
-                    lexicon.capture(name, frame);
-                    save_images(string(1, name));
+                    lexicon.capture(name, controller.frame());
                 }
             }
         }
