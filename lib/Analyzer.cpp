@@ -16,7 +16,7 @@ namespace LeapAsl
 {
 
 using namespace std;
-    
+
 Analyzer::Analyzer(string const& dictionary_path, string const& language_model_path, on_gesture_f&& on_gesture)
     : dictionary_(dictionary_path)
     , model_(language_model_path.c_str())
@@ -32,7 +32,7 @@ void Analyzer::reset()
 void Analyzer::on_recognition(multimap<double, char> const& matches)
 {
     // Keep the top N matches and give ourselves a vector of indices.
-    size_t const n_top_matches = min((size_t)3, matches.size());
+    size_t const n_top_matches = min((size_t)5, matches.size());
     
     vector<pair<double, char>> top_matches;
     copy_n(matches.rbegin(), n_top_matches, back_inserter(top_matches));
@@ -56,12 +56,14 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
     {
         for(int i : indices)
         {
-            if(top_matches[i].second != ' ' && top_matches[i].second != '.') // Skip space and punctuation at the begininng of a sentence.
+			char const c = top_matches[i].second;
+
+            if(c != ' ' && c != '.') // Skip space and punctuation at the begininng of a sentence.
             {
                 lm::ngram::State out_state;
-                auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(string(1, top_matches[i].second)), out_state);
+                auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(string(1, c)), out_state);
                 
-                sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, make_pair(string(1, top_matches[i].second), model_.BeginSentenceState()));
+				sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, sentence_state{string(1, c), dictionary_.find(c), model_.BeginSentenceState()});
             }
         }
     }
@@ -71,8 +73,8 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
         
         for(auto const& sentence : sentences_)
         {
-            auto const last_space_ix = sentence.second.first.rfind(" ");
-            auto const last_word = (last_space_ix == string::npos ? sentence.second.first : sentence.second.first.substr(last_space_ix + 1));
+            auto const last_space_ix = sentence.second.partial.rfind(" ");
+            auto const last_word = (last_space_ix == string::npos ? sentence.second.partial : sentence.second.partial.substr(last_space_ix + 1));
             
             for(int i : indices)
             {
@@ -82,14 +84,13 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
                 {
                     if(!last_word.empty())  // Do nothing on double spaces.
                     {
-                        auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
-                        if(validity == detail::trie<char>::correct)
+                        if(sentence.second.trie->is_word())
                         {
                             lm::ngram::State out_state;
-                            auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(last_word), out_state);
+                            auto const score = model_.Score(sentence.second.state, model_.GetVocabulary().Index(last_word), out_state);
                             
                             sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                              make_pair(sentence.second.first + c, out_state));
+											  sentence_state{sentence.second.partial + c, &dictionary_, out_state});
                         }
                     }
                 }
@@ -97,29 +98,27 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
                 {
                     if(!last_word.empty())  // Do nothing on double spaces.
                     {
-                        auto const validity = dictionary_.validate(last_word.begin(), last_word.end());
-                        if(validity == detail::trie<char>::correct)
+                        if(sentence.second.trie->is_word())
                         {
                             lm::ngram::State out_state;
-                            auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index("</s>"), out_state);
+                            auto const score = model_.Score(sentence.second.state, model_.GetVocabulary().Index("</s>"), out_state);
                             
                             sentences.emplace(combined_score{sentence.first.complete_words + score, 0., sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                              make_pair(sentence.second.first + c, out_state));
+											  sentence_state{sentence.second.partial + c, &dictionary_, out_state});
                         }
                     }
                 }
                 else
                 {
-                    auto const word = last_word + c;
-                    
-                    auto const validity = dictionary_.validate(word.begin(), word.end());
-                    if(validity & detail::trie<char>::valid)
-                    {
+					if(detail::trie const* t = sentence.second.trie->find(c))
+					{
+						auto const word = last_word + c;
+
                         lm::ngram::State out_state;
-                        auto const score = model_.Score(sentence.second.second, model_.GetVocabulary().Index(word), out_state);
+                        auto const score = model_.Score(sentence.second.state, model_.GetVocabulary().Index(word), out_state);
                         
                         sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
-                                          make_pair(sentence.second.first + c, sentence.second.second));
+										  sentence_state{sentence.second.partial + c, t, sentence.second.state});
                     }
                 }
             }
@@ -128,7 +127,7 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
         if(sentences.size() == 0)
         {
             // This means none of the top matches lead to valid words. Record this spot as a dropped character.
-            dropped_char_indices_.push_front(sentences_.begin()->second.first.size());
+            dropped_char_indices_.push_front(sentences_.begin()->second.partial.size());
         }
         else
         {
@@ -144,10 +143,10 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
     auto top_sentence = *sentences_.begin();
     for(auto const i : dropped_char_indices_)
     {
-        top_sentence.second.first.insert(i, Analyzer::dropped_symbol);
+        top_sentence.second.partial.insert(i, Analyzer::dropped_symbol);
     }
 
-    on_gesture_(top_matches, top_sentence.second.first);
+    on_gesture_(top_matches, top_sentence.second.partial);
 }
 
 string const Analyzer::dropped_symbol = "?";

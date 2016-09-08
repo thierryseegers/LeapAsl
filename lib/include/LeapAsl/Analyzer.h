@@ -20,7 +20,6 @@ namespace detail
 {
 // Minimal trie.
 // We use it as a special spell-checker that can indicate whether a string is a valid word, an incomplete valid word or neither.
-template<typename T>
 class trie
 {
 public:
@@ -45,15 +44,14 @@ public:
         }
     }
     
-    trie<T>* insert(T const& t)
+    trie* insert(char const c)
     {
-        return &children_[t];
+        return &children_[c];
     }
     
-    template<typename I>
-    trie<T>* insert(I begin, I end)
+	trie* insert(std::string::const_iterator begin, std::string::const_iterator const end)
     {
-        trie<T> *p = this;
+        trie *p = this;
         
         while(begin != end)
         {
@@ -63,69 +61,21 @@ public:
         
         return p;
     }
-    
-    const trie<T>* find(T const& t) const
-    {
-        auto i = children_.find(t);
-        
-        return i == children_.end() ? nullptr : &i->second;
-    }
-    
-    size_t size() const
-    {
-        return children_.size();
-    }
-    
-    size_t count(T const& t) const
-    {
-        return children_.count(t);
-    }
-    
-    enum validity
-    {
-        invalid = 0x0,
-        valid = 0x1,
-        correct = 0x3
-    };
-    
-    template<typename I>
-    validity validate(I begin, I end) const
-    {
-        const trie<T> *p = this;
-        
-        while(p && begin != end)
-        {
-            p = p->find(*begin);
-            ++begin;
-        }
-        
-        if(p)
-        {
-            if(!p->count('\0'))
-            {
-                return valid;
-            }
-            else if(p->size() > 1)
-            {
-                return (validity)(valid | correct);
-            }
-            else
-            {
-                return correct;
-            }
-        }
-        
-        return invalid;
-    }
-    
-    template<typename R>
-    validity validate(R const& r) const
-    {
-        return validate(std::begin(r), std::end(r));
-    }
+
+	const trie* find(char const c) const
+	{
+		auto i = children_.find(c);
+
+		return i == children_.end() ? nullptr : &i->second;
+	}
+
+	bool is_word() const
+	{
+		return children_.find('\0') != children_.end();
+	}
     
 private:
-    std::map<T, trie<T>> children_;
+    std::map<char, trie> children_;
 };
 
 }
@@ -144,7 +94,7 @@ public:
 private:
     static std::string const dropped_symbol;
     
-    detail::trie<char> dictionary_;
+    detail::trie dictionary_;
     lm::ngram::Model model_;
     on_gesture_f on_gesture_;
     
@@ -159,8 +109,15 @@ private:
             return (std::abs(complete_words) + std::abs(incomplete_word) + gesture) < (std::abs(other.complete_words) + std::abs(other.incomplete_word) + other.gesture);
         }
     };
-    
-    using sentences_t = std::multimap<combined_score, std::pair<std::string, lm::ngram::State>>;
+
+	struct sentence_state
+	{
+		std::string partial;
+		detail::trie const* trie;
+		lm::ngram::State state;
+	};
+
+    using sentences_t = std::multimap<combined_score, sentence_state>;
     sentences_t sentences_;
     
     std::list<std::string::size_type> dropped_char_indices_;
