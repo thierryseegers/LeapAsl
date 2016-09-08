@@ -2,6 +2,8 @@
 
 #include "LeapAsl/LeapAsl.h"
 
+#include <LeapSDK/Leap.h>
+
 #include <chrono>
 #include <fstream>
 #include <memory>
@@ -13,6 +15,8 @@ using namespace std;
 
 int main()
 {
+	Leap::Controller controller;
+	
     string last_top_sentence;
     size_t cumulative_distance = 0;
     auto const on_gesture = [&](vector<pair<double, char>> const&, string const& top_sentence)
