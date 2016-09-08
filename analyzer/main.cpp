@@ -41,7 +41,7 @@ int main()
 
 	unique_ptr<LeapAsl::Predictors::Predictor> predictor;
 #if defined(USE_MLPACK)
-	predictor = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("softmax_regression_model.xml");
+	predictor = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("mlpack_softmax_regression_model.xml");
 #else
 	predictor = make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream);
 #endif
