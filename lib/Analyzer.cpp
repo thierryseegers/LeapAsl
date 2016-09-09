@@ -60,10 +60,21 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
 
             if(c != ' ' && c != '.') // Skip space and punctuation at the begininng of a sentence.
             {
-                lm::ngram::State out_state;
-                auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(string(1, c)), out_state);
-                
-				sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, sentence_state{string(1, c), dictionary_.find(c), model_.BeginSentenceState()});
+				if(detail::trie const* t = dictionary_.find(c))
+				{
+					lm::ngram::State out_state;
+					auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(string(1, c)), out_state);
+
+					sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, sentence_state{string(1, toupper(c)), t, out_state});
+				}
+
+				if(detail::trie const* t = dictionary_.find(toupper(c)))
+				{
+					lm::ngram::State out_state;
+					auto const score = model_.Score(model_.BeginSentenceState(), model_.GetVocabulary().Index(string(1, toupper(c))), out_state);
+
+					sentences_.emplace(combined_score{0, score, (i + 1.) * top_matches[i].first}, sentence_state{string(1, toupper(c)), t, out_state});
+				}
             }
         }
     }
@@ -114,12 +125,23 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
 					{
 						auto const word = last_word + c;
 
-                        lm::ngram::State out_state;
-                        auto const score = model_.Score(sentence.second.state, model_.GetVocabulary().Index(word), out_state);
-                        
-                        sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
+						lm::ngram::State out_state;
+						auto const score = model_.Score(sentence.second.state, model_.GetVocabulary().Index(word), out_state);
+
+						sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
 										  sentence_state{sentence.second.partial + c, t, sentence.second.state});
-                    }
+					}
+
+					if(detail::trie const* t = sentence.second.trie->find(toupper(c)))
+					{
+						auto const word = last_word + (char)toupper(c);
+
+						lm::ngram::State out_state;
+						auto const score = model_.Score(sentence.second.state, model_.GetVocabulary().Index(word), out_state);
+
+						sentences.emplace(combined_score{sentence.first.complete_words, score, sentence.first.gesture + (i + 1) * top_matches[i].first},
+										  sentence_state{sentence.second.partial + (char)toupper(c), t, sentence.second.state});
+					}
                 }
             }
         }
@@ -139,7 +161,7 @@ void Analyzer::on_recognition(multimap<double, char> const& matches)
             swap(sentences, sentences_);
         }
     }
-    
+	
     auto top_sentence = *sentences_.begin();
     for(auto const i : dropped_char_indices_)
     {
