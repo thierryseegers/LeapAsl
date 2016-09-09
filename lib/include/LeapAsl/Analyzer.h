@@ -39,7 +39,6 @@ public:
         std::string word;
         while(std::getline(dictionary_stream, word))
         {
-            std::transform(word.begin(), word.end(), word.begin(), ::tolower);
             insert(word.begin(), word.end())->insert('\0');
         }
     }
