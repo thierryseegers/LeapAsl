@@ -1,3 +1,5 @@
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 add_executable(analyzer
     levhenstein_distance.h
     main.cpp
@@ -19,10 +21,12 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
 endif()
 
 target_include_directories(analyzer
+	PRIVATE ${Boost_INCLUDE_DIRS}
     PRIVATE ${Leap_INCLUDE_DIR}
 )
 
 target_link_libraries(analyzer
+	PRIVATE ${Boost_LIBRARIES}
     PRIVATE LeapAsl::LeapAsl
 )
 

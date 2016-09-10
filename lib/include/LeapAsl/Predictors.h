@@ -28,7 +28,7 @@ class Lexicon : public Predictor
     LeapAsl::Lexicon lexicon_;
     
 public:
-    Lexicon(std::ifstream& lexicon);
+    Lexicon(std::ifstream&& lexicon);
     
     virtual std::multimap<double, char> predict(Leap::Hand const& hand) const override;
 };
