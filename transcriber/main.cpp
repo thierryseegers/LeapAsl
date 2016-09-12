@@ -103,7 +103,7 @@ int main()
 		}
 	}
 	predictors["Lexicon"] = make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream);
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 	predictors["MlpackSoftmaxRegression"] = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("mlpack_softmax_regression_model.xml");
 #endif
 	auto const default_predictor = predictors.cbegin();

@@ -6,9 +6,10 @@ find_package(Leap REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
 
-if(USE_MLPACK)
-	find_package(Armadillo REQUIRED)
-	find_package(mlpack REQUIRED)
+find_package(Armadillo)
+find_package(mlpack)
+if(Armadillo_FOUND AND mlpack_FOUND)
+	set(ENABLE_MLPACK TRUE)
 endif()
 
 add_library(LeapAsl
@@ -52,9 +53,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
     )
 endif()
 
-if(USE_MLPACK)
+if(ENABLE_MLPACK)
 	target_compile_options(LeapAsl
-		PUBLIC -DUSE_MLPACK
+		PUBLIC -DENABLE_MLPACK
 	)
 endif()
 
@@ -68,7 +69,7 @@ target_include_directories(LeapAsl
     PUBLIC ${Leap_INCLUDE_DIR}/LeapSDK
 )
 
-if(USE_MLPACK)
+if(ENABLE_MLPACK)
 	target_include_directories(LeapAsl
 		PUBLIC ${mlpack_INCLUDE_DIR}
 	)
@@ -84,7 +85,7 @@ target_link_libraries(LeapAsl
     PRIVATE ${ZLIB_LIBRARIES}
 )
 
-if(USE_MLPACK)
+if(ENABLE_MLPACK)
 	target_link_libraries(LeapAsl
 		PRIVATE ${ARMADILLO_LIBRARIES}
 		PRIVATE ${mlpack_LIBRARIES}

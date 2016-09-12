@@ -3,7 +3,7 @@
 #include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 	#include <mlpack/methods/softmax_regression/softmax_regression.hpp>
 #endif
 
@@ -33,7 +33,7 @@ public:
     virtual std::multimap<double, char> predict(Leap::Hand const& hand) const override;
 };
 
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 class MlpackSoftmaxRegression : public Predictor
 {
 	mlpack::regression::SoftmaxRegression<> softmax_regression_model_;

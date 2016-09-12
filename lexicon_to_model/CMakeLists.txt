@@ -1,6 +1,6 @@
 find_package(Leap REQUIRED)
 
-if(USE_MLPACK)
+if(ENABLE_MLPACK)
 	find_package(mlpack REQUIRED)
 endif()
 
@@ -29,7 +29,7 @@ target_include_directories(lexicon_to_model
     PRIVATE ${mlpack_INCLUDE_DIR}
 )
 
-if(USE_MLPACK)
+if(ENABLE_MLPACK)
 	target_include_directories(lexicon_to_model
 		PUBLIC ${mlpack_INCLUDE_DIR}
 	)
@@ -42,7 +42,7 @@ target_link_libraries(lexicon_to_model
     PRIVATE ${mlpack_LIBRARIES}
 )
 
-if(USE_MLPACK)
+if(ENABLE_MLPACK)
 	target_link_libraries(lexicon_to_model
 		PRIVATE ${ARMADILLO_LIBRARIES}
 		PRIVATE ${mlpack_LIBRARIES}

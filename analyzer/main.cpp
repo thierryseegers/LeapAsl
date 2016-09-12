@@ -26,14 +26,14 @@ int main(int argc, char* argv[])
 	("lexicon,l", boost::program_options::value<string>(&lexicon_path)->default_value("lexicon.sample"), "Path to lexicon file")
 	("predictor,p", boost::program_options::value<string>()->default_value("lexicon")->notifier([](string const& value)
 	{
-#if !defined(USE_MLPACK)
+#if !defined(ENABLE_MLPACK)
 		if(value == "mlpack-softmax-regression")
 		{
 			throw boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value, "predictor", value);
 		}
 #endif
 	}), "Predictor to use, one of: {lexicon"
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 ", mlpack-softmax-regression"
 #endif
 "}"
@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	boost::program_options::variables_map vm;
 	try
 	{
-		boost::program_options::store(po::parse_command_line(argc, argv, desc), vm);
+		boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
 		boost::program_options::notify(vm);
 
 		if(vm.count("help"))

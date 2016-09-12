@@ -4,7 +4,7 @@
 #include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 	#include <mlpack/core.hpp>
 	#include <mlpack/methods/softmax_regression/softmax_regression.hpp>
 #endif
@@ -30,7 +30,7 @@ multimap<double, char> Lexicon::predict(Leap::Hand const& hand) const
     return lexicon_.compare(hand);
 }
 
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 MlpackSoftmaxRegression::MlpackSoftmaxRegression(string const& model_path)
     : softmax_regression_model_(0, 0, true)
 {

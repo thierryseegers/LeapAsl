@@ -2,7 +2,7 @@
 #include "LeapAsl/Lexicon.h"
 
 #include <LeapSDK/Leap.h>
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 	#include <mlpack/core.hpp>
 	#include <mlpack/methods/softmax_regression/softmax_regression.hpp>
 #endif
@@ -19,7 +19,7 @@ int main()
 
 	ofstream data_stream("data.csv"), labels_stream("labels.csv");
 
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
     arma::Mat<double> training_data(240, 0);
     arma::Row<size_t> training_labels;
 #endif
@@ -30,7 +30,7 @@ int main()
         {
 			labels_stream << name << endl;
 
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 			training_labels.insert_cols(training_labels.n_cols, 1);
 			training_labels(0, training_labels.n_cols - 1) = LeapAsl::character_to_label.at(name);
 
@@ -49,7 +49,7 @@ int main()
 					<< bone.yBasis.x << ',' << bone.yBasis.y << ',' << bone.yBasis.z << ','
 					<< bone.zBasis.x << ',' << bone.zBasis.y << ',' << bone.zBasis.z;
 
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
 				training_data(i++, training_data.n_cols - 1) = bone.origin.x;
 				training_data(i++, training_data.n_cols - 1) = bone.origin.y;
 				training_data(i++, training_data.n_cols - 1) = bone.origin.z;
@@ -72,7 +72,7 @@ int main()
         }
     }
 
-#if defined(USE_MLPACK)
+#if defined(ENABLE_MLPACK)
     mlpack::regression::SoftmaxRegressionFunction sm_function(training_data, training_labels, LeapAsl::character_to_label.size());
     mlpack::optimization::L_BFGS<mlpack::regression::SoftmaxRegressionFunction> optimizer(sm_function);
     mlpack::regression::SoftmaxRegression<> sm_regression(optimizer);
