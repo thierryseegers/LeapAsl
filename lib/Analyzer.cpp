@@ -17,8 +17,8 @@ namespace LeapAsl
 
 using namespace std;
 
-Analyzer::Analyzer(string const& dictionary_path, string const& language_model_path, on_gesture_f&& on_gesture)
-    : dictionary_(dictionary_path)
+Analyzer::Analyzer(ifstream&& dictionary, string const& language_model_path, on_gesture_f&& on_gesture)
+    : dictionary_(move(dictionary))
     , model_(language_model_path.c_str())
     , on_gesture_(on_gesture)
     , reset_(false)

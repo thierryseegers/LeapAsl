@@ -2,6 +2,9 @@
 
 #include "LeapAsl/LeapAsl.h"
 
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/program_options.hpp>
 #include <LeapSDK/Leap.h>
 #include <LeapSDK/LeapMath.h>
 #include <LeapSDK/util/LeapUtilGL.h>
@@ -23,8 +26,49 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char *argv[])
 {
+	boost::filesystem::path capture, dictionary, language_model, lexicon, mlpack_softmax_regression_model;
+
+	auto const validate_path = [](boost::filesystem::path const& path, string const& option_name)
+	{
+		if(!boost::filesystem::exists(path) ||
+		   !boost::filesystem::is_regular_file(path))
+		{
+			throw boost::program_options::validation_error(boost::program_options::validation_error::invalid_option_value, option_name, path.string());
+		}
+	};
+
+	boost::program_options::options_description options;
+	options.add_options()
+	("help,h", "Help screen")
+	("capture,c", boost::program_options::value<boost::filesystem::path>(&capture)->default_value("capture"), "Path to capture file")
+	("dictionary,d", boost::program_options::value<boost::filesystem::path>(&dictionary)->default_value("aspell_en_expanded")->notifier(bind(validate_path, placeholders::_1, "dictionary")), "Path to dictionary file")
+	("lexicon,l", boost::program_options::value<boost::filesystem::path>(&lexicon)->default_value("lexicon.sample")->notifier(bind(validate_path, placeholders::_1, "lexicon")), "Path to lexicon file")
+#if defined(ENABLE_MLPACK)
+	("mlpack-softmax-regression-model,r", boost::program_options::value<boost::filesystem::path>(&mlpack_softmax_regression_model)->default_value("mlpack_softmax_regression_model.xml")->notifier(bind(validate_path, placeholders::_1, "mlpack-softmax-regression-model")), "Path to mlpack softmax regression model file")
+#endif
+	("language-model,m", boost::program_options::value<boost::filesystem::path>(&language_model)->default_value("romeo_and_juliet_corpus.mmap"), "Path to language model file");
+	
+	boost::program_options::variables_map vm;
+	try
+	{
+		boost::program_options::store(boost::program_options::parse_command_line(argc, argv, options), vm);
+		boost::program_options::notify(vm);
+		
+		if(vm.count("help"))
+		{
+			cout << options << "\n";
+			return 0;
+		}
+	}
+	catch(const exception & e)
+	{
+		cerr << e.what() << endl;
+		cout << options << endl;
+		return 1;
+	}
+
     sf::Font font;
     if(!font.loadFromFile("resources/arial.ttf"))
     {
@@ -82,10 +126,10 @@ int main()
         last_top_sentence = top_sentence;
     };
     
-    LeapAsl::Analyzer analyzer("aspell_en_expanded", "romeo_and_juliet_corpus.mmap", on_gesture);
+	 LeapAsl::Analyzer analyzer(boost::filesystem::ifstream(dictionary), language_model.string(), on_gesture);
     
-    ofstream record_stream("capture");
-    LeapAsl::Recorder recorder(record_stream);
+	boost::filesystem::ofstream record(capture);
+    LeapAsl::Recorder recorder(record);
     
     Leap::Controller controller;
     controller.addListener(recorder);
@@ -93,18 +137,10 @@ int main()
 	// Instantiate predictors.
 	map<string, unique_ptr<LeapAsl::Predictors::Predictor const>> predictors;
 
-	ifstream lexicon_data_istream("lexicon", ios::binary);
-	if(!lexicon_data_istream)
-	{
-		lexicon_data_istream.open("lexicon.sample", ios::binary);
-		if(!lexicon_data_istream)
-		{
-			return EXIT_FAILURE;
-		}
-	}
-	predictors["Lexicon"] = make_unique<LeapAsl::Predictors::Lexicon>(lexicon_data_istream);
+
+	predictors["Lexicon"] = make_unique<LeapAsl::Predictors::Lexicon>(boost::filesystem::ifstream(lexicon));
 #if defined(ENABLE_MLPACK)
-	predictors["MlpackSoftmaxRegression"] = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>("mlpack_softmax_regression_model.xml");
+	predictors["MlpackSoftmaxRegression"] = make_unique<LeapAsl::Predictors::MlpackSoftmaxRegression>(mlpack_softmax_regression_model.string());
 #endif
 	auto const default_predictor = predictors.cbegin();
 
@@ -189,7 +225,7 @@ int main()
                     current_levhenstein_distance.setString("Error: 0");
                     cumulative_levhenstein_distance.setString("Cumulative error: 0");
                     
-                    record_stream.open("capture", ios_base::trunc);
+                    record.open(capture, ios_base::trunc);
                 }
                 // Look up a pre-recorded character.
                 else if(sf::Keyboard::isKeyPressed(sf::Keyboard::LAlt) ||

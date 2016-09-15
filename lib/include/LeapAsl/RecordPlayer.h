@@ -20,14 +20,14 @@ public:
 
 class RecordPlayer
 {
-    std::istream& record_stream_;
+    std::istream& record_;
     
     std::vector<std::reference_wrapper<RecordPlayerListener>> listeners_;
     
     Leap::Frame last_frame_ = Leap::Frame::invalid();
     
 public:
-    RecordPlayer(std::istream& i);
+    RecordPlayer(std::istream& record);
     
     void add_listener(RecordPlayerListener& listener);
     

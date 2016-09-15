@@ -12,10 +12,10 @@ namespace LeapAsl
 
 using namespace std;
 
-RecordPlayer::RecordPlayer(istream& i)
-    : record_stream_(i)
+RecordPlayer::RecordPlayer(istream& record)
+    : record_(record)
 {}
-    
+
 void RecordPlayer::add_listener(RecordPlayerListener& listener)
 {
     listeners_.push_back(listener);
@@ -26,11 +26,11 @@ void RecordPlayer::read()
     string::size_type serialized_length;
 
 	Leap::Frame frame;
-	while(record_stream_ >> serialized_length, record_stream_.ignore())
+	while(record_ >> serialized_length, record_.ignore())
 	{
 		string serialized_frame(serialized_length, '\0');
-		record_stream_.read(&*serialized_frame.begin(), serialized_length);
-		record_stream_.ignore();
+		record_.read(&*serialized_frame.begin(), serialized_length);
+		record_.ignore();
 
 		last_frame_.deserialize(serialized_frame);
 

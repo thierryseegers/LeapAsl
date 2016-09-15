@@ -1,3 +1,4 @@
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 find_package(Leap REQUIRED)
 find_package(SFML REQUIRED COMPONENTS graphics system window)
 
@@ -22,12 +23,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
 endif()
 
 target_include_directories(transcriber
+	PRIVATE ${Boost_INCLUDE_DIRS}
     PRIVATE ${Leap_INCLUDE_DIR}
     PRIVATE ${Leap_INCLUDE_DIR}/LeapSDK
 )
 
 target_link_libraries(transcriber
     PRIVATE LeapAsl::LeapAsl
+	PRIVATE ${Boost_LIBRARIES}
     PRIVATE ${Leap_BUILD_LIBRARIES}
     PRIVATE ${SFML_LIBRARIES}
 )

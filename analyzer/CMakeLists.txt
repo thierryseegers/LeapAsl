@@ -1,4 +1,4 @@
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 
 add_executable(analyzer
     levhenstein_distance.h

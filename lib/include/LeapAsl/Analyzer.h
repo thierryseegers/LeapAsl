@@ -26,7 +26,7 @@ public:
     trie()
     {}
     
-    trie(std::string const& dictionary_path)
+	trie(std::ifstream&& dictionary)
     {
         // We insert a '\0' to indicate valid words. e.g.:
         // b->\0
@@ -34,10 +34,8 @@ public:
         //     ->a
         //       ->n->\0
         // That way, we know that "be" is a valid word and that "bea" leads to a valid word.
-        std::ifstream dictionary_stream{dictionary_path};
-        
         std::string word;
-        while(std::getline(dictionary_stream, word))
+        while(std::getline(dictionary, word))
         {
             insert(word.begin(), word.end())->insert('\0');
         }
@@ -84,7 +82,7 @@ class Analyzer
 public:
     using on_gesture_f = std::function<void (std::vector<std::pair<double, char>> const&, std::string const&)>;
     
-    Analyzer(std::string const& dictionary_path, std::string const& language_model_path, on_gesture_f&& on_gesture);
+	Analyzer(std::ifstream&& dictionary, std::string const& language_model_path, on_gesture_f&& on_gesture);
     
     void reset();
     
