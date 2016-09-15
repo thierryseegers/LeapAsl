@@ -5,7 +5,7 @@
 
 #include <LeapSDK/Leap.h>
 
-#include <chrono>
+#include <functional>
 #include <map>
 #include <memory>
 
@@ -14,7 +14,7 @@ namespace LeapAsl
 
 using namespace std;
 
-Recognizer::Recognizer(Predictors::Predictor const* const predictor, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
+Recognizer::Recognizer(Predictors::Predictor const& predictor, on_recognition_f&& on_recognition, duration const& hold_duration, duration const& rest_duration)
 	: predictor_(predictor)
 	, on_recognition_(on_recognition)
 	, hold_duration_(hold_duration)
@@ -31,7 +31,7 @@ void Recognizer::onFrame(Leap::Controller const& controller)
 	analyze(controller.frame(), chrono::high_resolution_clock::now());
 }
 
-Predictors::Predictor const*& Recognizer::predictor()
+reference_wrapper<Predictors::Predictor const>& Recognizer::predictor()
 {
 	return predictor_;
 }
@@ -91,7 +91,7 @@ void Recognizer::analyze(Leap::Frame const& frame, time_point const& now)
 	}
 
 	// Analyze the one hand present.
-	for(auto const& score : predictor_->predict(hand))
+	for(auto const& score : predictor_.get().predict(hand))
 	{
 		double& average = scores_[score.second];
 		average = (average * n_frames_analyzed_ + score.first) / (n_frames_analyzed_ + 1);

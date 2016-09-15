@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 	predictor_name.setString(default_predictor->first);
 
 	// Instantiate recognizer.
-	LeapAsl::Recognizer recognizer(default_predictor->second.get(), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+	LeapAsl::Recognizer recognizer(*default_predictor->second, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
     controller.addListener(recognizer);
     
     Leap::Hand replay_hand;
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
 					auto const p = next(predictors.cbegin(), event.key.code - sf::Keyboard::Num0);
 
 					predictor_name.setString(p->first);
-					recognizer.predictor() = p->second.get();
+					recognizer.predictor() = *p->second;
 				}
             }
         }

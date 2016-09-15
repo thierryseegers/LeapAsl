@@ -6,7 +6,7 @@
 
 #include <LeapSDK/Leap.h>
 
-#include <chrono>
+#include <functional>
 #include <map>
 
 namespace LeapAsl
@@ -22,11 +22,11 @@ public:
     using duration = std::chrono::high_resolution_clock::duration;
     using time_point = std::chrono::high_resolution_clock::time_point;
     
-	Recognizer(Predictors::Predictor const* const predictor, on_recognition_f&& on_recognition, duration const& hold_duration = 1s, duration const& rest_duration = 1s);
+	Recognizer(Predictors::Predictor const& predictor, on_recognition_f&& on_recognition, duration const& hold_duration = 1s, duration const& rest_duration = 1s);
     
 	~Recognizer();
 
-	Predictors::Predictor const*& predictor();
+	std::reference_wrapper<Predictors::Predictor const>& predictor();
 
 	virtual void onFrame(Leap::Controller const& controller) override;
     
@@ -35,7 +35,7 @@ public:
 private:
 	void analyze(Leap::Frame const& frame, time_point const& now);
 
-	Predictors::Predictor const* predictor_;
+	std::reference_wrapper<Predictors::Predictor const> predictor_;
     
     on_recognition_f const on_recognition_;
     duration const hold_duration_, rest_duration_;

@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 		predictor = make_unique<LeapAsl::Predictors::Lexicon>(boost::filesystem::ifstream(lexicon));
 	}
 
-	LeapAsl::Recognizer recognizer(predictor.get(), bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
+	LeapAsl::Recognizer recognizer(*predictor, bind(&LeapAsl::Analyzer::on_recognition, ref(analyzer), placeholders::_1));
 	record_player.add_listener(recognizer);
 
 	record_player.read();
